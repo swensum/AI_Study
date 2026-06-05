@@ -395,7 +395,7 @@ class _MessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final isUser = message.isUser;
     
-    // AI messages - full width, no background, with rich text
+    // AI messages - full width, no background
     if (!isUser) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 28),
@@ -467,7 +467,7 @@ class _MessageBubble extends StatelessWidget {
                 ),
               ),
             
-            // Rich text content with markdown-like formatting
+            // Rich text with bold formatting only
             _buildRichText(message.content),
             
             // Timestamp
@@ -477,7 +477,8 @@ class _MessageBubble extends StatelessWidget {
                 '${message.timestamp.hour}:${message.timestamp.minute.toString().padLeft(2, '0')}',
                 style: TextStyle(
                   fontSize: 11,
-                  color: Colors.grey.shade400,
+                  color: Colors.grey.shade800,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -510,6 +511,7 @@ class _MessageBubble extends StatelessWidget {
                 fontSize: 15,
                 height: 1.5,
                 color: Colors.grey.shade800,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -520,7 +522,7 @@ class _MessageBubble extends StatelessWidget {
             child: Text(
               '${message.timestamp.hour}:${message.timestamp.minute.toString().padLeft(2, '0')}',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 color: Colors.grey.shade800,
                 fontWeight: FontWeight.w600,
               ),
@@ -531,11 +533,10 @@ class _MessageBubble extends StatelessWidget {
     );
   }
 
-  // Rich text builder - parses **bold** and *italic* markers
+  // Rich text builder - parses only **bold** markers
   Widget _buildRichText(String text) {
-    // Parse markdown-like formatting
     List<TextSpan> spans = [];
-    RegExp exp = RegExp(r'(\*\*.*?\*\*|\*.*?\*)');
+    RegExp exp = RegExp(r'\*\*(.*?)\*\*');
     Iterable<RegExpMatch> matches = exp.allMatches(text);
     
     int lastEnd = 0;
@@ -548,36 +549,23 @@ class _MessageBubble extends StatelessWidget {
           style: TextStyle(
             fontSize: 15,
             height: 1.6,
-            color: Colors.black,
+            color: Colors.grey.shade800,
+            fontWeight: FontWeight.w600,
           ),
         ));
       }
       
-      // Add formatted text
-      String matchText = match.group(0)!;
-      if (matchText.startsWith('**') && matchText.endsWith('**')) {
-        // Bold text
-        spans.add(TextSpan(
-          text: matchText.substring(2, matchText.length - 2),
-          style: TextStyle(
-            fontSize: 15,
-            height: 1.6,
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
-        ));
-      } else if (matchText.startsWith('*') && matchText.endsWith('*')) {
-        // Italic text
-        spans.add(TextSpan(
-          text: matchText.substring(1, matchText.length - 1),
-          style: TextStyle(
-            fontSize: 15,
-            height: 1.6,
-            color: Colors.grey.shade800,
-            fontStyle: FontStyle.italic,
-          ),
-        ));
-      }
+      // Add bold text
+      String matchText = match.group(1)!;
+      spans.add(TextSpan(
+        text: matchText,
+        style: const TextStyle(
+          fontSize: 16,
+          height: 1.6,
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+        ),
+      ));
       
       lastEnd = match.end;
     }
@@ -590,8 +578,22 @@ class _MessageBubble extends StatelessWidget {
           fontSize: 15,
           height: 1.6,
           color: Colors.grey.shade800,
+          fontWeight: FontWeight.w600,
         ),
       ));
+    }
+    
+    // If no bold formatting found, return normal text
+    if (spans.isEmpty) {
+      return SelectableText(
+        text,
+        style: TextStyle(
+          fontSize: 15,
+          height: 1.6,
+          color: Colors.grey.shade800,
+          fontWeight: FontWeight.w600,
+        ),
+      );
     }
     
     return SelectableText.rich(

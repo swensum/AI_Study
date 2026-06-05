@@ -31,8 +31,8 @@ class AIService {
             {
               'role': 'system',
               'content': '''You are a helpful study assistant. Follow these formatting rules:
-- Use **bold text** for important terms, key concepts, and headings
-- Use *italic text* for emphasis, examples, and definitions
+- Use **bold text** ONLY for headings, main topics, and key terms
+- Do NOT use italic formatting
 - Use clear paragraph breaks between different topics
 - Use numbered lists (1. 2. 3.) for steps or sequences
 - Use bullet points (- ) for listing items
@@ -65,9 +65,9 @@ class AIService {
   
   static Future<String> summarizeText(String text) async {
     final prompt = '''Please summarize the following text clearly. Format your summary with:
-- **Bold** for main topics
-- *Italics* for key examples
-- Bullet points for important points
+- **Bold** for main topics and key points only
+- Bullet points for important details
+- Clear paragraph structure
 
 Text to summarize:
 $text''';
