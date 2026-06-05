@@ -32,7 +32,6 @@ class _ChatScreenState extends State<ChatScreen> {
       drawer: const SidebarDrawer(),
       body: Stack(
         children: [
-          
           _buildChatArea(),
           
           // Floating menu button (top left)
@@ -69,7 +68,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // Floating button widget (for menu and delete)
+  // Floating button widget
   Widget _buildFloatingButton({
     required IconData icon,
     required VoidCallback onTap,
@@ -101,7 +100,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // Chat area - takes full screen
+  // Chat area
   Widget _buildChatArea() {
     return Consumer<ChatProvider>(
       builder: (context, chatProvider, child) {
@@ -112,10 +111,10 @@ class _ChatScreenState extends State<ChatScreen> {
         return ListView.builder(
           controller: _scrollController,
           padding: EdgeInsets.only(
-            top: MediaQuery.of(context).padding.top + 60, // Space for top buttons
-            bottom: 100, // Space for floating input
-            left: 16,
-            right: 16,
+            top: MediaQuery.of(context).padding.top + 60,
+            bottom: 100,
+            left: 20,
+            right: 20,
           ),
           itemCount: chatProvider.messages.length + (chatProvider.isLoading ? 1 : 0),
           itemBuilder: (context, index) {
@@ -129,7 +128,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // Empty state when no messages
+  // Empty state
   Widget _buildEmptyState() {
     return Container(
       width: double.infinity,
@@ -140,7 +139,6 @@ class _ChatScreenState extends State<ChatScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // AI icon
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
@@ -195,7 +193,6 @@ class _ChatScreenState extends State<ChatScreen> {
           
           const SizedBox(height: 32),
           
-          // Mode indicator chips
           Consumer<ChatProvider>(
             builder: (context, chatProvider, child) {
               return Row(
@@ -221,7 +218,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // Mode chip for empty state
   Widget _buildModeChip({
     required IconData icon,
     required String label,
@@ -259,11 +255,9 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // Floating input area (transparent, no container)
   Widget _buildFloatingInput() {
     return Row(
       children: [
-        // Text field with glass effect
         Expanded(
           child: Material(
             elevation: 4,
@@ -302,7 +296,6 @@ class _ChatScreenState extends State<ChatScreen> {
         
         const SizedBox(width: 8),
         
-        // Send button (same style as menu/delete buttons)
         Material(
           color: Colors.white.withOpacity(0.95),
           elevation: 4,
@@ -340,7 +333,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // Send message logic
   void _sendMessage() {
     if (_controller.text.trim().isNotEmpty) {
       context.read<ChatProvider>().sendMessage(
@@ -360,7 +352,6 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  // Clear chat dialog
   void _showClearChatDialog() {
     showDialog(
       context: context,
@@ -404,89 +395,207 @@ class _MessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final isUser = message.isUser;
     
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-        children: [
-          // Sender label
-          Padding(
-            padding: const EdgeInsets.only(bottom: 4, left: 4, right: 4),
-            child: Text(
-              isUser ? 'You' : 'AI Assistant',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: isUser ? Colors.deepPurple : Colors.grey.shade600,
+    // AI messages - full width, no background, with rich text
+    if (!isUser) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // AI label with icon
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.deepPurple.shade300,
+                          Colors.deepPurple.shade500,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.auto_awesome,
+                      size: 14,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'AI Assistant',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          
-          // Message container
+            
+            // Summary badge
+            if (message.isSummary)
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Colors.orange.shade200,
+                    width: 0.5,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.summarize, size: 14, color: Colors.orange.shade700),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Summary',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.orange.shade700,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            
+            // Rich text content with markdown-like formatting
+            _buildRichText(message.content),
+            
+            // Timestamp
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(
+                '${message.timestamp.hour}:${message.timestamp.minute.toString().padLeft(2, '0')}',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey.shade400,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    // User messages - simple bubble, no label
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // User message bubble
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width * 0.8,
             ),
             decoration: BoxDecoration(
-              color: isUser ? Colors.deepPurple.shade50 : Colors.grey.shade50,
-              borderRadius: BorderRadius.circular(16).copyWith(
-                topLeft: isUser ? const Radius.circular(16) : Radius.zero,
-                topRight: isUser ? Radius.zero : const Radius.circular(16),
+              color: Colors.deepPurple.shade50,
+              borderRadius: BorderRadius.circular(20).copyWith(
+                bottomRight: Radius.zero,
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (message.isSummary)
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.shade100,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.summarize, size: 14, color: Colors.orange),
-                        SizedBox(width: 4),
-                        Text(
-                          'Summary',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.orange,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                SelectableText(
-                  message.content,
-                  style: TextStyle(
-                    fontSize: 15,
-                    height: 1.5,
-                    color: Colors.grey.shade800,
-                  ),
-                ),
-              ],
+            child: SelectableText(
+              message.content,
+              style: TextStyle(
+                fontSize: 15,
+                height: 1.5,
+                color: Colors.grey.shade800,
+              ),
             ),
           ),
           
           // Timestamp
           Padding(
-            padding: const EdgeInsets.only(top: 4, left: 4, right: 4),
+            padding: const EdgeInsets.only(top: 8, right: 4),
             child: Text(
               '${message.timestamp.hour}:${message.timestamp.minute.toString().padLeft(2, '0')}',
               style: TextStyle(
-                fontSize: 11,
-                color: Colors.grey.shade400,
+                fontSize: 12,
+                color: Colors.grey.shade800,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  // Rich text builder - parses **bold** and *italic* markers
+  Widget _buildRichText(String text) {
+    // Parse markdown-like formatting
+    List<TextSpan> spans = [];
+    RegExp exp = RegExp(r'(\*\*.*?\*\*|\*.*?\*)');
+    Iterable<RegExpMatch> matches = exp.allMatches(text);
+    
+    int lastEnd = 0;
+    
+    for (RegExpMatch match in matches) {
+      // Add text before this match
+      if (match.start > lastEnd) {
+        spans.add(TextSpan(
+          text: text.substring(lastEnd, match.start),
+          style: TextStyle(
+            fontSize: 15,
+            height: 1.6,
+            color: Colors.black,
+          ),
+        ));
+      }
+      
+      // Add formatted text
+      String matchText = match.group(0)!;
+      if (matchText.startsWith('**') && matchText.endsWith('**')) {
+        // Bold text
+        spans.add(TextSpan(
+          text: matchText.substring(2, matchText.length - 2),
+          style: TextStyle(
+            fontSize: 15,
+            height: 1.6,
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ));
+      } else if (matchText.startsWith('*') && matchText.endsWith('*')) {
+        // Italic text
+        spans.add(TextSpan(
+          text: matchText.substring(1, matchText.length - 1),
+          style: TextStyle(
+            fontSize: 15,
+            height: 1.6,
+            color: Colors.grey.shade800,
+            fontStyle: FontStyle.italic,
+          ),
+        ));
+      }
+      
+      lastEnd = match.end;
+    }
+    
+    // Add remaining text
+    if (lastEnd < text.length) {
+      spans.add(TextSpan(
+        text: text.substring(lastEnd),
+        style: TextStyle(
+          fontSize: 15,
+          height: 1.6,
+          color: Colors.grey.shade800,
+        ),
+      ));
+    }
+    
+    return SelectableText.rich(
+      TextSpan(children: spans),
     );
   }
 }
@@ -498,52 +607,65 @@ class _LoadingBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(bottom: 4, left: 4),
-            child: Text(
-              'AI Assistant',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey,
-              ),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade50,
-              borderRadius: const BorderRadius.only(
-                topRight: Radius.circular(16),
-                bottomLeft: Radius.circular(16),
-                bottomRight: Radius.circular(16),
-              ),
-            ),
+          // AI label
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
             child: Row(
-              mainAxisSize: MainAxisSize.min,
               children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.deepPurple.shade300,
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.deepPurple.shade300,
+                        Colors.deepPurple.shade500,
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.auto_awesome,
+                    size: 14,
+                    color: Colors.white,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 Text(
-                  'Thinking...',
+                  'AI Assistant',
                   style: TextStyle(
-                    color: Colors.grey.shade500,
-                    fontSize: 14,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade700,
                   ),
                 ),
               ],
             ),
+          ),
+          
+          // Loading animation
+          Row(
+            children: [
+              SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.deepPurple.shade300,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Thinking...',
+                style: TextStyle(
+                  color: Colors.grey.shade500,
+                  fontSize: 14,
+                ),
+              ),
+            ],
           ),
         ],
       ),

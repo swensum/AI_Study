@@ -15,7 +15,7 @@ class AIService {
   
   static const String baseUrl = 'https://api.groq.com/openai/v1/chat/completions';
   
-   static const String model = "llama-3.1-8b-instant"; // Fast & free
+  static const String model = "llama-3.1-8b-instant"; // Fast & free
   
   static Future<String> sendMessage(String prompt) async {
     try {
@@ -30,7 +30,14 @@ class AIService {
           'messages': [
             {
               'role': 'system',
-              'content': 'You are a helpful study assistant. Explain concepts clearly and concisely with examples when helpful.'
+              'content': '''You are a helpful study assistant. Follow these formatting rules:
+- Use **bold text** for important terms, key concepts, and headings
+- Use *italic text* for emphasis, examples, and definitions
+- Use clear paragraph breaks between different topics
+- Use numbered lists (1. 2. 3.) for steps or sequences
+- Use bullet points (- ) for listing items
+- Keep explanations clear, well-structured, and educational
+- Always format your responses for readability'''
             },
             {
               'role': 'user',
@@ -57,7 +64,13 @@ class AIService {
   }
   
   static Future<String> summarizeText(String text) async {
-    final prompt = 'Please summarize the following text in a clear and concise way, highlighting key points:\n\n$text';
+    final prompt = '''Please summarize the following text clearly. Format your summary with:
+- **Bold** for main topics
+- *Italics* for key examples
+- Bullet points for important points
+
+Text to summarize:
+$text''';
     return await sendMessage(prompt);
   }
   
@@ -84,16 +97,3 @@ class AIService {
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
