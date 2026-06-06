@@ -54,8 +54,8 @@ class _ChatScreenState extends State<ChatScreen> {
             top: MediaQuery.of(context).padding.top + 8,
             right: 16,
             child: _buildFloatingButton(
-              icon: Icons.delete_outline,
-              onTap: _showClearChatDialog,
+              icon: Icons.more_vert,
+             onTap: () {},
             ),
           ),
           
@@ -71,39 +71,35 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // Floating button widget
   Widget _buildFloatingButton({
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.white.withOpacity(0.95),
-      elevation: 4,
-      borderRadius: BorderRadius.circular(12),
-      shadowColor: Colors.black.withOpacity(0.1),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Colors.grey.shade200,
-              width: 0.5,
-            ),
-          ),
-          child: Icon(
-            icon,
-            color: Colors.grey.shade700,
-            size: 22,
-          ),
+  required IconData icon,
+  required VoidCallback onTap,
+}) {
+  
+
+  return Material(
+    color: Colors.deepPurple,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(50),
+      side: BorderSide(
+        color: Colors.deepPurple.shade200,
+        width: 2,
+      ),
+    ),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(50),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        child: Icon(
+          icon,
+          color: Colors.white,
+          size: 22,
         ),
       ),
-    );
-  }
-
-  // Chat area
+    ),
+  );
+}
   Widget _buildChatArea() {
   return Consumer<ChatProvider>(
     builder: (context, chatProvider, child) {
@@ -376,37 +372,6 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void _showClearChatDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: const Text('Clear Chat'),
-        content: const Text('Delete all messages?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: Colors.grey.shade600),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              context.read<ChatProvider>().clearChat();
-              Navigator.pop(context);
-            },
-            child: const Text(
-              'Clear',
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 // Message bubble widget
