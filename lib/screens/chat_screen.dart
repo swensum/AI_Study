@@ -288,7 +288,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 color: Colors.white.withOpacity(0.95),
                 borderRadius: BorderRadius.circular(28),
                 border: Border.all(
-                  color: Colors.grey.shade200,
+                  color: Colors.grey.shade400,
                   width: 1,
                 ),
               ),
@@ -299,7 +299,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   hintText: context.watch<ChatProvider>().mode == 'summarize'
                       ? 'Paste text to summarize...'
                       : 'Ask anything...',
-                  hintStyle: TextStyle(color: Colors.grey.shade400),
+                  hintStyle: TextStyle(color: Colors.grey.shade800),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 20,
