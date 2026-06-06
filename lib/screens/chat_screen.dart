@@ -34,6 +34,9 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           _buildChatArea(),
           
+          // Subtle blur bar at top (like ChatGPT)
+   
+          
           // Floating menu button (top left)
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
@@ -102,32 +105,53 @@ class _ChatScreenState extends State<ChatScreen> {
 
   // Chat area
   Widget _buildChatArea() {
-    return Consumer<ChatProvider>(
-      builder: (context, chatProvider, child) {
-        if (chatProvider.messages.isEmpty) {
-          return _buildEmptyState();
-        }
-        
-        return ListView.builder(
+  return Consumer<ChatProvider>(
+    builder: (context, chatProvider, child) {
+      if (chatProvider.messages.isEmpty) {
+        return _buildEmptyState();
+      }
+
+      return ShaderMask(
+        shaderCallback: (Rect rect) {
+          return const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.transparent,
+              Colors.black,
+              Colors.black,
+            ],
+            stops: [
+              0.0,
+              0.12,
+              1.0,
+            ],
+          ).createShader(rect);
+        },
+        blendMode: BlendMode.dstIn,
+        child: ListView.builder(
           controller: _scrollController,
           padding: EdgeInsets.only(
-            top: MediaQuery.of(context).padding.top + 60,
+            top: MediaQuery.of(context).padding.top + 70,
             bottom: 100,
             left: 20,
             right: 20,
           ),
-          itemCount: chatProvider.messages.length + (chatProvider.isLoading ? 1 : 0),
+          itemCount: chatProvider.messages.length +
+              (chatProvider.isLoading ? 1 : 0),
           itemBuilder: (context, index) {
             if (index == chatProvider.messages.length) {
               return const _LoadingBubble();
             }
-            return _MessageBubble(message: chatProvider.messages[index]);
+            return _MessageBubble(
+              message: chatProvider.messages[index],
+            );
           },
-        );
-      },
-    );
-  }
-
+        ),
+      );
+    },
+  );
+}
   // Empty state
   Widget _buildEmptyState() {
     return Container(
