@@ -9,55 +9,14 @@ class SidebarDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      width: MediaQuery.of(context).size.width * 0.75,
+      width: MediaQuery.of(context).size.width, // Full width like ChatGPT
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Drawer Header
             _buildHeader(),
-            
-            const Divider(height: 1),
-            
-            // Mode Selection Title
-            _buildSectionTitle('MODE'),
-            
-            // Mode Selection Items
-            Consumer<ChatProvider>(
-              builder: (context, chatProvider, child) {
-                return Column(
-                  children: [
-                    _buildDrawerItem(
-                      context: context,
-                      icon: Icons.chat_bubble_outline,
-                      title: 'Chat Mode',
-                      subtitle: 'Ask questions to AI',
-                      isSelected: chatProvider.mode == 'chat',
-                      onTap: () {
-                        chatProvider.setMode('chat');
-                        Navigator.pop(context);
-                      },
-                    ),
-                    _buildDrawerItem(
-                      context: context,
-                      icon: Icons.summarize_outlined,
-                      title: 'Summarize Mode',
-                      subtitle: 'Summarize your notes',
-                      isSelected: chatProvider.mode == 'summarize',
-                      onTap: () {
-                        chatProvider.setMode('summarize');
-                        Navigator.pop(context);
-                      },
-                    ),
-                  ],
-                );
-              },
-            ),
-            
-            const Divider(height: 1),
-            
-            // History Section
-            _buildSectionTitle('HISTORY'),
+            _buildSectionTitle('Recents'),
             
             // Recent Chats
             Expanded(
@@ -67,10 +26,10 @@ class SidebarDrawer extends StatelessWidget {
                     return _buildEmptyHistory();
                   }
                   
-                  // Get last 5 user messages for history
+                  // Get last 10 user messages for history
                   final recentMessages = chatProvider.messages
                       .where((m) => m.isUser)
-                      .take(5)
+                      .take(10)
                       .toList();
                   
                   return ListView.builder(
@@ -101,104 +60,102 @@ class SidebarDrawer extends StatelessWidget {
   }
 
   // Header with logo and title
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Logo
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.deepPurple.shade50,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.school,
-              color: Colors.deepPurple.shade400,
-              size: 32,
-            ),
-          ),
-          const SizedBox(height: 16),
-          
-          // Title
-          Text(
-            'AI Study Assistant',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey.shade800,
-            ),
-          ),
-          const SizedBox(height: 4),
-          
-          // Subtitle
-          Text(
-            'Your personal AI tutor',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+ Widget _buildHeader() {
+  return Container(
+    padding: const EdgeInsets.all(20),
+    child: Row(
+      children: [
+        Icon(
+          Icons.school,
+          color: Colors.deepPurple.shade400,
+          size: 32,
+        ),
+        const SizedBox(width: 12),
 
-  // Section title (MODE, HISTORY)
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'AI Study Assistant',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade800,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Your personal AI tutor',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade800,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Search Button
+        _buildHeaderIcon(
+          icon: Icons.search,
+          onTap: () {
+            // Search action
+          },
+        ),
+
+        const SizedBox(width: 8),
+
+        // Profile Button
+        _buildHeaderIcon(
+          icon: Icons.person_outline,
+          onTap: () {
+            // Profile action
+          },
+        ),
+      ],
+    ),
+  );
+}
+ Widget _buildHeaderIcon({
+  required IconData icon,
+  required VoidCallback onTap,
+}) {
+  return InkWell(
+    borderRadius: BorderRadius.circular(12),
+    onTap: onTap,
+    child: Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.grey.shade300,
+        ),
+      ),
+      child: Icon(
+        icon,
+        size: 20,
+        color: Colors.grey.shade800,
+      ),
+    ),
+  );
+}
+
+
+  // Section title
   Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Text(
         title,
         style: TextStyle(
-          fontSize: 12,
+          fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: Colors.grey.shade500,
+          color: Colors.grey.shade800,
           letterSpacing: 1,
-        ),
-      ),
-    );
-  }
-
-  // Drawer item (Chat Mode, Summarize Mode)
-  Widget _buildDrawerItem({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: isSelected ? Colors.deepPurple.shade50 : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ListTile(
-        leading: Icon(
-          icon,
-          color: isSelected ? Colors.deepPurple : Colors.grey.shade600,
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            color: isSelected ? Colors.deepPurple : Colors.grey.shade800,
-          ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey.shade500,
-          ),
-        ),
-        onTap: onTap,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
         ),
       ),
     );
@@ -224,33 +181,33 @@ class SidebarDrawer extends StatelessWidget {
     required String message,
     required DateTime date,
   }) {
-    return ListTile(
-      dense: true,
-      leading: Icon(
-        Icons.chat_bubble_outline,
-        size: 18,
-        color: Colors.grey.shade400,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 1, vertical: 2),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
       ),
-      title: Text(
-        message,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          fontSize: 14,
-          color: Colors.grey.shade700,
-        ),
+      child:  InkWell(
+  borderRadius: BorderRadius.circular(10),
+  onTap: () {
+    Navigator.pop(context);
+  },
+  child: Padding(
+    padding: const EdgeInsets.symmetric(
+      horizontal: 12,
+      vertical: 8,
+    ),
+    child: Text(
+      message,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        fontSize: 16,
+        color: Colors.grey.shade800,
+        fontWeight: FontWeight.w600,
       ),
-      subtitle: Text(
-        _formatDate(date),
-        style: TextStyle(
-          fontSize: 11,
-          color: Colors.grey.shade400,
-        ),
-      ),
-      onTap: () {
-        // Close drawer when tapping history
-        Navigator.pop(context);
-      },
+    ),
+  ),
+),
     );
   }
 
@@ -279,20 +236,5 @@ class SidebarDrawer extends StatelessWidget {
   }
 
   // Format date helper
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-    
-    if (difference.inMinutes < 1) {
-      return 'Just now';
-    } else if (difference.inHours < 1) {
-      return '${difference.inMinutes}m ago';
-    } else if (difference.inDays < 1) {
-      return '${difference.inHours}h ago';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays}d ago';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
-    }
-  }
+  
 }
