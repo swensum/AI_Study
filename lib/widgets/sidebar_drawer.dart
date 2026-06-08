@@ -9,15 +9,17 @@ class SidebarDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      width: MediaQuery.of(context).size.width, // Full width like ChatGPT
+      width: MediaQuery.of(context).size.width,
+      backgroundColor: Colors.white,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Drawer Header
+             
             _buildHeader(),
+            const SizedBox(height: 26),
             _buildSectionTitle('Recents'),
-            
+
             // Recent Chats
             Expanded(
               child: Consumer<ChatProvider>(
@@ -25,13 +27,13 @@ class SidebarDrawer extends StatelessWidget {
                   if (chatProvider.messages.isEmpty) {
                     return _buildEmptyHistory();
                   }
-                  
+
                   // Get last 10 user messages for history
                   final recentMessages = chatProvider.messages
                       .where((m) => m.isUser)
                       .take(10)
                       .toList();
-                  
+
                   return ListView.builder(
                     itemCount: recentMessages.length,
                     padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -47,9 +49,9 @@ class SidebarDrawer extends StatelessWidget {
                 },
               ),
             ),
-            
+
             const Spacer(),
-            
+
             // Footer
             const Divider(height: 1),
             _buildFooter(),
@@ -60,20 +62,16 @@ class SidebarDrawer extends StatelessWidget {
   }
 
   // Header with logo and title
- Widget _buildHeader() {
-  return Container(
-    padding: const EdgeInsets.all(20),
-    child: Row(
-      children: [
-        Icon(
-          Icons.school,
-          color: Colors.deepPurple.shade400,
-          size: 32,
-        ),
-        const SizedBox(width: 12),
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.school, color: Colors.deepPurple.shade400, size: 32),
+          const SizedBox(width: 12),
 
-        Expanded(
-          child: Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
@@ -95,55 +93,69 @@ class SidebarDrawer extends StatelessWidget {
               ),
             ],
           ),
-        ),
 
-        // Search Button
-        _buildHeaderIcon(
-          icon: Icons.search,
-          onTap: () {
-            // Search action
-          },
-        ),
+          const Spacer(),
 
-        const SizedBox(width: 8),
+          // Search + Profile container
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4F1FF),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.deepPurple.withOpacity(0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+              border: Border.all(color: Colors.deepPurple.shade100, width: 1),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () {},
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Icon(
+                      Icons.search,
+                      size: 22,
+                      color: Colors.deepPurple.shade400,
+                    ),
+                  ),
+                ),
 
-        // Profile Button
-        _buildHeaderIcon(
-          icon: Icons.person_outline,
-          onTap: () {
-            // Profile action
-          },
-        ),
-      ],
-    ),
-  );
-}
- Widget _buildHeaderIcon({
-  required IconData icon,
-  required VoidCallback onTap,
-}) {
-  return InkWell(
-    borderRadius: BorderRadius.circular(12),
-    onTap: onTap,
-    child: Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.grey.shade300,
-        ),
+                const SizedBox(width: 2),
+
+                Container(
+                  width: 1,
+                  height: 18,
+                  color: Colors.deepPurple.shade100,
+                ),
+
+                const SizedBox(width: 2),
+
+                InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () {},
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Icon(
+                      Icons.person_outline,
+                      size: 22,
+                      color: Colors.deepPurple.shade600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
-      child: Icon(
-        icon,
-        size: 20,
-        color: Colors.grey.shade800,
-      ),
-    ),
-  );
-}
-
+    );
+  }
 
   // Section title
   Widget _buildSectionTitle(String title) {
@@ -183,31 +195,26 @@ class SidebarDrawer extends StatelessWidget {
   }) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 1, vertical: 2),
-      decoration: BoxDecoration(
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
+      child: InkWell(
         borderRadius: BorderRadius.circular(10),
+        onTap: () {
+          Navigator.pop(context);
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Text(
+            message,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey.shade800,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
       ),
-      child:  InkWell(
-  borderRadius: BorderRadius.circular(10),
-  onTap: () {
-    Navigator.pop(context);
-  },
-  child: Padding(
-    padding: const EdgeInsets.symmetric(
-      horizontal: 12,
-      vertical: 8,
-    ),
-    child: Text(
-      message,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: TextStyle(
-        fontSize: 16,
-        color: Colors.grey.shade800,
-        fontWeight: FontWeight.w600,
-      ),
-    ),
-  ),
-),
     );
   }
 
@@ -217,18 +224,11 @@ class SidebarDrawer extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          Icon(
-            Icons.auto_awesome,
-            size: 16,
-            color: Colors.deepPurple.shade300,
-          ),
+          Icon(Icons.auto_awesome, size: 16, color: Colors.deepPurple.shade300),
           const SizedBox(width: 8),
           Text(
             'Powered by AI',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade500,
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
           ),
         ],
       ),
@@ -236,5 +236,4 @@ class SidebarDrawer extends StatelessWidget {
   }
 
   // Format date helper
-  
 }
