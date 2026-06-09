@@ -33,11 +33,7 @@ class _ChatScreenState extends State<ChatScreen> {
       body: Stack(
         children: [
           _buildChatArea(),
-          
-          // Subtle blur bar at top (like ChatGPT)
-   
-          
-          // Floating menu button (top left)
+
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
             left: 16,
@@ -48,17 +44,86 @@ class _ChatScreenState extends State<ChatScreen> {
               },
             ),
           ),
-          
+
           // Floating delete button (top right)
           Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
-            right: 16,
-            child: _buildFloatingButton(
-              icon: Icons.more_vert,
-             onTap: () {},
+  top: MediaQuery.of(context).padding.top + 8,
+  right: 16,
+  child: _buildFloatingButton(
+    icon: Icons.more_vert,
+    onTap: () async {
+      final result = await showMenu(
+        context: context,
+        position: RelativeRect.fromLTRB(
+          MediaQuery.of(context).size.width,
+          MediaQuery.of(context).padding.top + 60,
+          16,
+          0,
+        ),
+        color: Colors.white, // Set menu background to white
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 8,
+        items: [
+          const PopupMenuItem(
+            value: 'new_chat',
+            child: Row(
+              children: [
+                Icon(Icons.add, color: Colors.black87),
+                SizedBox(width: 12),
+                Text('New Chat', style: TextStyle(color: Colors.black87)),
+              ],
             ),
           ),
-          
+          const PopupMenuItem(
+            value: 'clear_chat',
+            child: Row(
+              children: [
+                Icon(Icons.delete_outline, color: Colors.black87),
+                SizedBox(width: 12),
+                Text('Clear Chat', style: TextStyle(color: Colors.black87)),
+              ],
+            ),
+          ),
+          const PopupMenuItem(
+            value: 'settings',
+            child: Row(
+              children: [
+                Icon(Icons.settings_outlined, color: Colors.black87),
+                SizedBox(width: 12),
+                Text('Settings', style: TextStyle(color: Colors.black87)),
+              ],
+            ),
+          ),
+        ],
+      );
+
+      switch (result) {
+        case 'new_chat':
+          // Create new session
+          context.read<ChatProvider>().startNewChat();
+          break;
+
+        case 'clear_chat':
+          // Clear current chat messages
+          context.read<ChatProvider>().clearChat();
+          break;
+
+        case 'settings':
+          // Settings not implemented yet
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Settings coming soon!'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+          break;
+      }
+    },
+  ),
+),
+
           // Floating input area (bottom)
           Positioned(
             bottom: MediaQuery.of(context).padding.bottom + 8,
@@ -72,82 +137,65 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildFloatingButton({
-  required IconData icon,
-  required VoidCallback onTap,
-}) {
-  
-
-  return Material(
-    color: Colors.deepPurple,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(50),
-      side: BorderSide(
-        color: Colors.deepPurple.shade200,
-        width: 2,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.deepPurple,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(50),
+        side: BorderSide(color: Colors.deepPurple.shade200, width: 2),
       ),
-    ),
-    child: InkWell(
-      borderRadius: BorderRadius.circular(50),
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        child: Icon(
-          icon,
-          color: Colors.white,
-          size: 22,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(50),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          child: Icon(icon, color: Colors.white, size: 22),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
+
   Widget _buildChatArea() {
-  return Consumer<ChatProvider>(
-    builder: (context, chatProvider, child) {
-      if (chatProvider.messages.isEmpty) {
-        return _buildEmptyState();
-      }
+    return Consumer<ChatProvider>(
+      builder: (context, chatProvider, child) {
+        if (chatProvider.messages.isEmpty) {
+          return _buildEmptyState();
+        }
 
-      return ShaderMask(
-        shaderCallback: (Rect rect) {
-          return const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.transparent,
-              Colors.black,
-              Colors.black,
-            ],
-            stops: [
-              0.0,
-              0.12,
-              1.0,
-            ],
-          ).createShader(rect);
-        },
-        blendMode: BlendMode.dstIn,
-        child: ListView.builder(
-          controller: _scrollController,
-          padding: EdgeInsets.only(
-            top: MediaQuery.of(context).padding.top + 70,
-            bottom: 100,
-            left: 20,
-            right: 20,
-          ),
-          itemCount: chatProvider.messages.length +
-              (chatProvider.isLoading ? 1 : 0),
-          itemBuilder: (context, index) {
-            if (index == chatProvider.messages.length) {
-              return const _LoadingBubble();
-            }
-            return _MessageBubble(
-              message: chatProvider.messages[index],
-            );
+        return ShaderMask(
+          shaderCallback: (Rect rect) {
+            return const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.transparent, Colors.black, Colors.black],
+              stops: [0.0, 0.12, 1.0],
+            ).createShader(rect);
           },
-        ),
-      );
-    },
-  );
-}
+          blendMode: BlendMode.dstIn,
+          child: ListView.builder(
+            controller: _scrollController,
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 70,
+              bottom: 100,
+              left: 20,
+              right: 20,
+            ),
+            itemCount:
+                chatProvider.messages.length + (chatProvider.isLoading ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (index == chatProvider.messages.length) {
+                return const _LoadingBubble();
+              }
+              return _MessageBubble(message: chatProvider.messages[index]);
+            },
+          ),
+        );
+      },
+    );
+  }
+
   // Empty state
   Widget _buildEmptyState() {
     return Container(
@@ -186,7 +234,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
           const SizedBox(height: 32),
-          
+
           Text(
             'How can I help you study?',
             style: TextStyle(
@@ -197,7 +245,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          
+
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Text(
@@ -210,9 +258,9 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 32),
-          
+
           Consumer<ChatProvider>(
             builder: (context, chatProvider, child) {
               return Row(
@@ -287,10 +335,7 @@ class _ChatScreenState extends State<ChatScreen> {
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.95),
                 borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: Colors.grey.shade400,
-                  width: 1,
-                ),
+                border: Border.all(color: Colors.grey.shade400, width: 1),
               ),
               child: TextField(
                 controller: _controller,
@@ -313,9 +358,9 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
         ),
-        
+
         const SizedBox(width: 8),
-        
+
         Material(
           color: Colors.white.withOpacity(0.95),
           elevation: 4,
@@ -355,11 +400,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _sendMessage() {
     if (_controller.text.trim().isNotEmpty) {
-      context.read<ChatProvider>().sendMessage(
-        _controller.text.trim(),
-      );
+      context.read<ChatProvider>().sendMessage(_controller.text.trim());
       _controller.clear();
-      
+
       Future.delayed(const Duration(milliseconds: 100), () {
         if (_scrollController.hasClients) {
           _scrollController.animateTo(
@@ -371,7 +414,6 @@ class _ChatScreenState extends State<ChatScreen> {
       });
     }
   }
-
 }
 
 // Message bubble widget
@@ -383,7 +425,7 @@ class _MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isUser = message.isUser;
-    
+
     // AI messages - full width, no background
     if (!isUser) {
       return Padding(
@@ -425,24 +467,28 @@ class _MessageBubble extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // Summary badge
             if (message.isSummary)
               Container(
                 margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.orange.shade50,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.orange.shade200,
-                    width: 0.5,
-                  ),
+                  border: Border.all(color: Colors.orange.shade200, width: 0.5),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.summarize, size: 14, color: Colors.orange.shade700),
+                    Icon(
+                      Icons.summarize,
+                      size: 14,
+                      color: Colors.orange.shade700,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       'Summary',
@@ -455,10 +501,10 @@ class _MessageBubble extends StatelessWidget {
                   ],
                 ),
               ),
-            
+
             // Rich text with bold formatting only
             _buildRichText(message.content),
-            
+
             // Timestamp
             Padding(
               padding: const EdgeInsets.only(top: 12),
@@ -475,7 +521,7 @@ class _MessageBubble extends StatelessWidget {
         ),
       );
     }
-    
+
     // User messages - simple bubble, no label
     return Padding(
       padding: const EdgeInsets.only(bottom: 28),
@@ -490,9 +536,9 @@ class _MessageBubble extends StatelessWidget {
             ),
             decoration: BoxDecoration(
               color: Colors.deepPurple.shade50,
-              borderRadius: BorderRadius.circular(20).copyWith(
-                bottomRight: Radius.zero,
-              ),
+              borderRadius: BorderRadius.circular(
+                20,
+              ).copyWith(bottomRight: Radius.zero),
             ),
             child: SelectableText(
               message.content,
@@ -504,7 +550,7 @@ class _MessageBubble extends StatelessWidget {
               ),
             ),
           ),
-          
+
           // Timestamp
           Padding(
             padding: const EdgeInsets.only(top: 8, right: 4),
@@ -527,51 +573,57 @@ class _MessageBubble extends StatelessWidget {
     List<TextSpan> spans = [];
     RegExp exp = RegExp(r'\*\*(.*?)\*\*');
     Iterable<RegExpMatch> matches = exp.allMatches(text);
-    
+
     int lastEnd = 0;
-    
+
     for (RegExpMatch match in matches) {
       // Add text before this match
       if (match.start > lastEnd) {
-        spans.add(TextSpan(
-          text: text.substring(lastEnd, match.start),
+        spans.add(
+          TextSpan(
+            text: text.substring(lastEnd, match.start),
+            style: TextStyle(
+              fontSize: 15,
+              height: 1.6,
+              color: Colors.grey.shade800,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        );
+      }
+
+      // Add bold text
+      String matchText = match.group(1)!;
+      spans.add(
+        TextSpan(
+          text: matchText,
+          style: const TextStyle(
+            fontSize: 16,
+            height: 1.6,
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+
+      lastEnd = match.end;
+    }
+
+    // Add remaining text
+    if (lastEnd < text.length) {
+      spans.add(
+        TextSpan(
+          text: text.substring(lastEnd),
           style: TextStyle(
             fontSize: 15,
             height: 1.6,
             color: Colors.grey.shade800,
             fontWeight: FontWeight.w600,
           ),
-        ));
-      }
-      
-      // Add bold text
-      String matchText = match.group(1)!;
-      spans.add(TextSpan(
-        text: matchText,
-        style: const TextStyle(
-          fontSize: 16,
-          height: 1.6,
-          color: Colors.black,
-          fontWeight: FontWeight.bold,
         ),
-      ));
-      
-      lastEnd = match.end;
+      );
     }
-    
-    // Add remaining text
-    if (lastEnd < text.length) {
-      spans.add(TextSpan(
-        text: text.substring(lastEnd),
-        style: TextStyle(
-          fontSize: 15,
-          height: 1.6,
-          color: Colors.grey.shade800,
-          fontWeight: FontWeight.w600,
-        ),
-      ));
-    }
-    
+
     // If no bold formatting found, return normal text
     if (spans.isEmpty) {
       return SelectableText(
@@ -584,10 +636,8 @@ class _MessageBubble extends StatelessWidget {
         ),
       );
     }
-    
-    return SelectableText.rich(
-      TextSpan(children: spans),
-    );
+
+    return SelectableText.rich(TextSpan(children: spans));
   }
 }
 
@@ -636,7 +686,7 @@ class _LoadingBubble extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Loading animation
           Row(
             children: [
@@ -651,10 +701,7 @@ class _LoadingBubble extends StatelessWidget {
               const SizedBox(width: 12),
               Text(
                 'Thinking...',
-                style: TextStyle(
-                  color: Colors.grey.shade500,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
               ),
             ],
           ),
