@@ -273,75 +273,70 @@ class SidebarDrawer extends StatelessWidget {
       ),
     );
   }
-
-  // Session item with long press to delete
-  Widget _buildSessionItem({
-    required BuildContext context,
-    required ChatSession session,
-    required bool isActive,
-    required VoidCallback onTap,
-    required VoidCallback onLongPress,
-  }) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 1, vertical: 2),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        color: isActive ? Colors.deepPurple.shade50 : Colors.transparent,
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        onTap: onTap,
-        onLongPress: onLongPress,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          child: Row(
-            children: [
-              Icon(
-                Icons.chat_bubble_outline,
-                size: 16,
-                color: isActive ? Colors.deepPurple : Colors.grey.shade500,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      session.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                        color: isActive ? Colors.deepPurple : Colors.grey.shade700,
-                      ),
+// Session item with long press to delete
+Widget _buildSessionItem({
+  required BuildContext context,
+  required ChatSession session,
+  required bool isActive,
+  required VoidCallback onTap,
+  required VoidCallback onLongPress,
+}) {
+  return Container(
+    margin: const EdgeInsets.symmetric(horizontal: 1, vertical: 2),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(10),
+      color: isActive ? Colors.deepPurple.shade50 : Colors.transparent,
+    ),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: onTap,
+      onLongPress: onLongPress,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          children: [
+            Icon(
+              Icons.chat_bubble_outline,
+              size: 16,
+              color: isActive ? Colors.deepPurple : Colors.grey.shade500,
+            ),
+            const SizedBox(width: 12),
+            Flexible(
+              flex: 1,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      return Text(
+                        session.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                          color: isActive ? Colors.deepPurple : Colors.grey.shade700,
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _formatDate(session.updatedAt),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade500,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _formatDate(session.updatedAt),
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              // Optional: Add a visual hint for long press
-              Container(
-                padding: const EdgeInsets.all(4),
-                child: Icon(
-                  Icons.more_horiz,
-                  size: 16,
-                  color: Colors.grey.shade400,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
