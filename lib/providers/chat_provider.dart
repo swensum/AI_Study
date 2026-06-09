@@ -3,33 +3,95 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:study_assistant/services/ai_service.dart';
 import '../models/chat_message.dart';
+import '../models/chat_session.dart';
 
 class ChatProvider extends ChangeNotifier {
-  List<ChatMessage> _messages = [];
+  List<ChatSession> _sessions = [];
+  ChatSession? _currentSession;
   bool _isLoading = false;
   String _mode = 'chat';
-  List<ChatMessage> get messages => _messages;
+  
+  List<ChatSession> get sessions => _sessions;
+  ChatSession? get currentSession => _currentSession;
+  List<ChatMessage> get messages => _currentSession?.messages ?? [];
   bool get isLoading => _isLoading;
   String get mode => _mode;
 
   ChatProvider() {
-    loadMessages();
+    loadSessions();
   }
+  
   void setMode(String mode) {
     _mode = mode;
     notifyListeners();
   }
 
+  void createNewSession() {
+    final newSession = ChatSession.create();
+    _sessions.insert(0, newSession);
+    _currentSession = newSession;
+    saveSessions();
+    notifyListeners();
+  }
+
+  void switchSession(String sessionId) {
+    final session = _sessions.firstWhere(
+      (s) => s.id == sessionId,
+      orElse: () => _sessions.first,
+    );
+    
+    if (_currentSession?.id != session.id) {
+      _currentSession = session;
+      notifyListeners();
+    }
+  }
+
+  void deleteSession(String sessionId) {
+    _sessions.removeWhere((s) => s.id == sessionId);
+    
+    if (_sessions.isEmpty) {
+      createNewSession();
+    } else if (_currentSession?.id == sessionId) {
+      _currentSession = _sessions.first;
+    }
+    
+    saveSessions();
+    notifyListeners();
+  }
+
+  void startNewChat() {
+    createNewSession();
+  }
+
   Future<void> sendMessage(String content) async {
+    if (content.trim().isEmpty) return;
+
+    // Add user message
     final userMessage = ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       content: content,
       isUser: true,
+      isSummary: false,
+      timestamp: DateTime.now(),
     );
-    _messages.add(userMessage);
+    
+    _currentSession?.messages.add(userMessage);
+    
+    // Update session title if it's the first message
+    if (_currentSession!.messages.length == 1) {
+      _currentSession!.updateTitle();
+    }
+    
+    _currentSession = _currentSession!.copyWith(
+      updatedAt: DateTime.now(),
+      messages: _currentSession!.messages,
+    );
+    
     _isLoading = true;
     notifyListeners();
+    saveSessions();
 
+    // Get AI response
     String response;
     if (_mode == 'summarize') {
       response = await AIService.summarizeText(content);
@@ -42,53 +104,96 @@ class ChatProvider extends ChangeNotifier {
       content: response,
       isUser: false,
       isSummary: _mode == 'summarize',
+      timestamp: DateTime.now(),
     );
-    _messages.add(aiMessage);
+    
+    _currentSession?.messages.add(aiMessage);
+    _currentSession = _currentSession!.copyWith(
+      updatedAt: DateTime.now(),
+      messages: _currentSession!.messages,
+    );
+    
     _isLoading = false;
     notifyListeners();
-
-    saveMessages();
+    saveSessions();
   }
 
   void clearChat() {
-    _messages.clear();
-    notifyListeners();
-    saveMessages();
+    if (_currentSession != null) {
+      _currentSession!.messages.clear();
+      _currentSession = _currentSession!.copyWith(
+        title: 'New Chat',
+        updatedAt: DateTime.now(),
+        messages: [],
+      );
+      saveSessions();
+      notifyListeners();
+    }
   }
 
-  Future<void> saveMessages() async {
+  Future<void> saveSessions() async {
     final prefs = await SharedPreferences.getInstance();
-    final messagesJson = _messages
-        .map(
-          (msg) => {
+    final sessionsJson = _sessions.map((session) {
+      return {
+        'id': session.id,
+        'title': session.title,
+        'createdAt': session.createdAt.toIso8601String(),
+        'updatedAt': session.updatedAt.toIso8601String(),
+        'messages': session.messages.map((msg) {
+          return {
             'id': msg.id,
             'content': msg.content,
             'isUser': msg.isUser,
             'isSummary': msg.isSummary,
             'timestamp': msg.timestamp.toIso8601String(),
-          },
-        )
-        .toList();
-    await prefs.setString('chat_messages', jsonEncode(messagesJson));
+          };
+        }).toList(),
+      };
+    }).toList();
+    
+    await prefs.setString('chat_sessions', jsonEncode(sessionsJson));
   }
 
-  Future<void> loadMessages() async {
+  Future<void> loadSessions() async {
     final prefs = await SharedPreferences.getInstance();
-    final messagesJson = prefs.getString('chat_messages');
-    if (messagesJson != null) {
-      final List<dynamic> decoded = jsonDecode(messagesJson);
-      _messages = decoded
-          .map(
-            (msg) => ChatMessage(
-              id: msg['id'],
-              content: msg['content'],
-              isUser: msg['isUser'],
-              timestamp: DateTime.parse(msg['timestamp']),
-              isSummary: msg['isSummary'] ?? false,
-            ),
-          )
-          .toList();
+    final sessionsJson = prefs.getString('chat_sessions');
+    
+    if (sessionsJson != null) {
+      final List<dynamic> decoded = jsonDecode(sessionsJson);
+      _sessions = decoded.map((sessionData) {
+        final messages = (sessionData['messages'] as List).map((msgData) {
+          return ChatMessage(
+            id: msgData['id'],
+            content: msgData['content'],
+            isUser: msgData['isUser'],
+            isSummary: msgData['isSummary'] ?? false,
+            timestamp: DateTime.parse(msgData['timestamp']),
+          );
+        }).toList();
+        
+        return ChatSession(
+          id: sessionData['id'],
+          title: sessionData['title'],
+          createdAt: DateTime.parse(sessionData['createdAt']),
+          updatedAt: DateTime.parse(sessionData['updatedAt']),
+          messages: messages.toList(),
+        );
+      }).toList();
+      
+      // Sort sessions by updatedAt (most recent first)
+      _sessions.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+      
+      // Set current session to the most recent one
+      if (_sessions.isNotEmpty) {
+        _currentSession = _sessions.first;
+      } else {
+        createNewSession();
+      }
+      
       notifyListeners();
+    } else {
+      // No sessions found, create a default one
+      createNewSession();
     }
   }
 }

@@ -1,7 +1,7 @@
-// lib/widgets/sidebar_drawer.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/chat_provider.dart';
+import '../models/chat_session.dart';
 
 class SidebarDrawer extends StatelessWidget {
   const SidebarDrawer({super.key});
@@ -15,34 +15,42 @@ class SidebarDrawer extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-             
+            // YOUR ORIGINAL HEADER with search and profile icons
             _buildHeader(),
             const SizedBox(height: 26),
+            
+            // New Chat Button
+            _buildNewChatButton(context),
+            
+            const SizedBox(height: 16),
             _buildSectionTitle('Recents'),
-
-            // Recent Chats
+            
+           
             Expanded(
               child: Consumer<ChatProvider>(
                 builder: (context, chatProvider, child) {
-                  if (chatProvider.messages.isEmpty) {
+                  if (chatProvider.sessions.isEmpty) {
                     return _buildEmptyHistory();
                   }
-
-                  // Get last 10 user messages for history
-                  final recentMessages = chatProvider.messages
-                      .where((m) => m.isUser)
-                      .take(10)
-                      .toList();
-
+                  
                   return ListView.builder(
-                    itemCount: recentMessages.length,
+                    itemCount: chatProvider.sessions.length,
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     itemBuilder: (context, index) {
-                      final message = recentMessages[index];
-                      return _buildHistoryItem(
+                      final session = chatProvider.sessions[index];
+                      final isActive = chatProvider.currentSession?.id == session.id;
+                      
+                      return _buildSessionItem(
                         context: context,
-                        message: message.content,
-                        date: message.timestamp,
+                        session: session,
+                        isActive: isActive,
+                        onTap: () {
+                          chatProvider.switchSession(session.id);
+                          Navigator.pop(context);
+                        },
+                        onLongPress: () {
+                          _showDeleteDialog(context, session.id, chatProvider);
+                        },
                       );
                     },
                   );
@@ -52,7 +60,7 @@ class SidebarDrawer extends StatelessWidget {
 
             const Spacer(),
 
-            // Footer
+            // YOUR ORIGINAL FOOTER
             const Divider(height: 1),
             _buildFooter(),
           ],
@@ -61,7 +69,47 @@ class SidebarDrawer extends StatelessWidget {
     );
   }
 
-  // Header with logo and title
+  void _showDeleteDialog(BuildContext context, String sessionId, ChatProvider chatProvider) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Chat'),
+        content: const Text('Are you sure you want to delete this conversation?'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              chatProvider.deleteSession(sessionId);
+              Navigator.pop(context);
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text(
+              'Delete',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // YOUR ORIGINAL HEADER with search and profile
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -96,7 +144,7 @@ class SidebarDrawer extends StatelessWidget {
 
           const Spacer(),
 
-          // Search + Profile container
+          // Search + Profile container (YOUR ORIGINAL)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
             decoration: BoxDecoration(
@@ -157,7 +205,47 @@ class SidebarDrawer extends StatelessWidget {
     );
   }
 
-  // Section title
+  Widget _buildNewChatButton(BuildContext context) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () {
+        context.read<ChatProvider>().startNewChat();
+        Navigator.pop(context);
+      },
+      child: Container(
+        width: double.infinity, // Make container take full width
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.deepPurple.shade400,
+              Colors.deepPurple.shade600,
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add, color: Colors.white, size: 20),
+            SizedBox(width: 8),
+            Text(
+              'New Chat',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -173,7 +261,6 @@ class SidebarDrawer extends StatelessWidget {
     );
   }
 
-  // Empty history message
   Widget _buildEmptyHistory() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -187,38 +274,91 @@ class SidebarDrawer extends StatelessWidget {
     );
   }
 
-  // History item
-  Widget _buildHistoryItem({
+  // Session item with long press to delete
+  Widget _buildSessionItem({
     required BuildContext context,
-    required String message,
-    required DateTime date,
+    required ChatSession session,
+    required bool isActive,
+    required VoidCallback onTap,
+    required VoidCallback onLongPress,
   }) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 1, vertical: 2),
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: isActive ? Colors.deepPurple.shade50 : Colors.transparent,
+      ),
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
-        onTap: () {
-          Navigator.pop(context);
-        },
+        onTap: onTap,
+        onLongPress: onLongPress,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Text(
-            message,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey.shade800,
-              fontWeight: FontWeight.w600,
-            ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              Icon(
+                Icons.chat_bubble_outline,
+                size: 16,
+                color: isActive ? Colors.deepPurple : Colors.grey.shade500,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      session.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                        color: isActive ? Colors.deepPurple : Colors.grey.shade700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _formatDate(session.updatedAt),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Optional: Add a visual hint for long press
+              Container(
+                padding: const EdgeInsets.all(4),
+                child: Icon(
+                  Icons.more_horiz,
+                  size: 16,
+                  color: Colors.grey.shade400,
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  // Footer
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final dateToCheck = DateTime(date.year, date.month, date.day);
+
+    if (dateToCheck == today) {
+      return 'Today';
+    } else if (dateToCheck == yesterday) {
+      return 'Yesterday';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
+  }
+
+  // YOUR ORIGINAL FOOTER
   Widget _buildFooter() {
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -234,6 +374,4 @@ class SidebarDrawer extends StatelessWidget {
       ),
     );
   }
-
-  // Format date helper
 }
