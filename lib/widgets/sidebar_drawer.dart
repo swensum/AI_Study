@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:study_assistant/screens/profilescreen.dart';
 import '../providers/chat_provider.dart';
 import '../models/chat_session.dart';
 
@@ -138,7 +139,7 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
                     },
                   )
                 : IconButton(
-                    icon: Icon(Icons.close, size: 20, color: Colors.grey.shade400),
+                    icon: Icon(Icons.close, size: 20, color: Colors.black),
                     onPressed: () {
                       setState(() {
                         _isSearching = false;
@@ -276,7 +277,12 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
 
                 InkWell(
                   borderRadius: BorderRadius.circular(20),
-                  onTap: () {},
+                  onTap: () {
+                     Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ProfileScreen()),
+    );
+                  },
                   child: Padding(
                     padding: const EdgeInsets.all(6),
                     child: Icon(
