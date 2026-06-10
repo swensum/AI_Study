@@ -41,8 +41,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 24),
             
             // Stats Cards
-            _buildStatsCards(),
-            const SizedBox(height: 24),
+           
             
             // Account Settings Section
             _buildSectionTitle('Account Settings'),
@@ -262,83 +261,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildStatsCards() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildStatCard(
-              icon: Icons.chat_bubble_outline,
-              value: '47',
-              label: 'Total Chats',
-              color: Colors.blue.shade50,
-              iconColor: Colors.blue.shade600,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildStatCard(
-              icon: Icons.auto_awesome,
-              value: '1,234',
-              label: 'Messages',
-              color: Colors.purple.shade50,
-              iconColor: Colors.deepPurple.shade600,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildStatCard(
-              icon: Icons.timer,
-              value: '12h',
-              label: 'Time Saved',
-              color: Colors.green.shade50,
-              iconColor: Colors.green.shade600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  
 
-  Widget _buildStatCard({
-    required IconData icon,
-    required String value,
-    required String label,
-    required Color color,
-    required Color iconColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: 24, color: iconColor),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey.shade800,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey.shade600,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+ 
 
   Widget _buildSectionTitle(String title) {
     return Padding(
