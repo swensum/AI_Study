@@ -11,7 +11,7 @@ class ChatProvider extends ChangeNotifier {
   bool _isLoading = false;
   String _mode = 'chat';
   
-  List<ChatSession> get sessions => _sessions;
+  List<ChatSession> get sessions => _sessions.where((s) => s.messages.isNotEmpty).toList();
   ChatSession? get currentSession => _currentSession;
   List<ChatMessage> get messages => _currentSession?.messages ?? [];
   bool get isLoading => _isLoading;
@@ -27,10 +27,9 @@ class ChatProvider extends ChangeNotifier {
   }
 
   void createNewSession() {
+    // Create new session but DON'T add to sessions list yet
     final newSession = ChatSession.create();
-    _sessions.insert(0, newSession);
     _currentSession = newSession;
-    saveSessions();
     notifyListeners();
   }
 
@@ -66,6 +65,16 @@ class ChatProvider extends ChangeNotifier {
   Future<void> sendMessage(String content) async {
     if (content.trim().isEmpty) return;
 
+    // Check if this is a new empty session that hasn't been added to sessions list yet
+    final isNewEmptySession = _currentSession != null && 
+        _currentSession!.messages.isEmpty && 
+        !_sessions.any((s) => s.id == _currentSession!.id);
+    
+    // Add to sessions list if it's a new empty session
+    if (isNewEmptySession) {
+      _sessions.insert(0, _currentSession!);
+    }
+
     // Add user message
     final userMessage = ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -80,12 +89,23 @@ class ChatProvider extends ChangeNotifier {
     // Update session title if it's the first message
     if (_currentSession!.messages.length == 1) {
       _currentSession!.updateTitle();
+      // Update the session in the list
+      final index = _sessions.indexWhere((s) => s.id == _currentSession!.id);
+      if (index != -1) {
+        _sessions[index] = _currentSession!;
+      }
     }
     
     _currentSession = _currentSession!.copyWith(
       updatedAt: DateTime.now(),
       messages: _currentSession!.messages,
     );
+    
+    // Update the session in the list
+    final index = _sessions.indexWhere((s) => s.id == _currentSession!.id);
+    if (index != -1) {
+      _sessions[index] = _currentSession!;
+    }
     
     _isLoading = true;
     notifyListeners();
@@ -113,19 +133,35 @@ class ChatProvider extends ChangeNotifier {
       messages: _currentSession!.messages,
     );
     
+    // Update the session in the list again
+    final sessionIndex = _sessions.indexWhere((s) => s.id == _currentSession!.id);
+    if (sessionIndex != -1) {
+      _sessions[sessionIndex] = _currentSession!;
+    }
+    
     _isLoading = false;
     notifyListeners();
     saveSessions();
   }
 
   void clearChat() {
-    if (_currentSession != null) {
+    if (_currentSession != null && _currentSession!.messages.isNotEmpty) {
+      // Clear all messages
       _currentSession!.messages.clear();
+      
+      // Reset the session title to default
       _currentSession = _currentSession!.copyWith(
         title: 'New Chat',
         updatedAt: DateTime.now(),
         messages: [],
       );
+      
+      // Update the session in the list
+      final index = _sessions.indexWhere((s) => s.id == _currentSession!.id);
+      if (index != -1) {
+        _sessions[index] = _currentSession!;
+      }
+      
       saveSessions();
       notifyListeners();
     }
