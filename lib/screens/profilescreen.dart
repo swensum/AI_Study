@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:study_assistant/widgets/theme.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -9,11 +11,11 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _notificationsEnabled = true;
-  bool _darkModeEnabled = false;
   String _selectedLanguage = 'English';
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -66,17 +68,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 });
               },
             ),
-            _buildSwitchMenuItem(
-              icon: Icons.dark_mode_outlined,
-              title: 'Dark Mode',
-              subtitle: 'Switch theme appearance',
-              value: _darkModeEnabled,
-              onChanged: (value) {
-                setState(() {
-                  _darkModeEnabled = value;
-                });
-              },
-            ),
+             _buildDarkModeSwitch(themeProvider), // Updated dark mode switch
             _buildDropdownMenuItem(
               icon: Icons.language,
               title: 'Language',
@@ -339,6 +331,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
       trailing: Switch(
         value: value,
         onChanged: onChanged,
+        activeColor: Colors.deepPurple,
+      ),
+    );
+  }
+  Widget _buildDarkModeSwitch(ThemeProvider themeProvider) {
+    final isDarkMode = themeProvider.isDarkMode;
+    
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(Icons.dark_mode_outlined, size: 22, color: Colors.deepPurple),
+      ),
+      title: Text(
+        'Dark Mode',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: isDarkMode ? Colors.white : Colors.grey.shade800,
+        ),
+      ),
+      subtitle: Text(
+        'Switch theme appearance',
+        style: TextStyle(
+          fontSize: 13,
+          color: isDarkMode ? Colors.grey.shade500 : Colors.grey.shade500,
+        ),
+      ),
+      trailing: Switch(
+        value: isDarkMode,
+        onChanged: (value) {
+          themeProvider.toggleTheme(); // This toggles the theme globally
+        },
         activeColor: Colors.deepPurple,
       ),
     );
