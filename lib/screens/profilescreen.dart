@@ -45,12 +45,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             
             // Account Settings Section
             _buildSectionTitle('Account Settings'),
-            _buildMenuItem(
-              icon: Icons.person_outline,
-              title: 'Personal Information',
-              subtitle: 'Name, email, phone',
-              onTap: () {},
-            ),
+            
             _buildMenuItem(
               icon: Icons.lock_outline,
               title: 'Privacy & Security',
@@ -216,16 +211,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               color: Colors.grey.shade800,
             ),
           ),
-          const SizedBox(height: 4),
           
-          // Email
-          Text(
-            'alex.johnson@example.com',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade500,
-            ),
-          ),
+          
           const SizedBox(height: 12),
           
           // Edit Profile Button
