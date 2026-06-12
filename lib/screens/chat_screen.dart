@@ -1,10 +1,10 @@
 // lib/screens/chat_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:study_assistant/widgets/theme.dart';
 import '../models/chat_message.dart';
 import '../providers/chat_provider.dart';
 import '../widgets/sidebar_drawer.dart';
+import '../widgets/theme.dart'; // Your ThemeProvider
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -28,9 +28,10 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDarkMode = themeProvider.isDarkMode;
+    final colors = themeProvider.colors;
+    
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: colors.background,
       key: _scaffoldKey,
       drawer: const SidebarDrawer(),
       body: Stack(
@@ -48,7 +49,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
 
-          // Floating delete button (top right)
+          // Floating menu button (top right)
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
             right: 16,
@@ -63,7 +64,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     16,
                     0,
                   ),
-                  color: themeProvider.getSurfaceColor(context),
+                  color: colors.surface,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -73,37 +74,37 @@ class _ChatScreenState extends State<ChatScreen> {
                       value: 'new_chat',
                       child: Row(
                         children: [
-                          Icon(Icons.add, color:themeProvider.getTextColor(context)),
+                          Icon(Icons.add, color: colors.text),
                           const SizedBox(width: 12),
                           Text(
                             'New Chat',
-                            style:TextStyle(color: themeProvider.getTextColor(context)),
+                            style: TextStyle(color: colors.text),
                           ),
                         ],
                       ),
                     ),
-                     PopupMenuItem(
+                    PopupMenuItem(
                       value: 'clear_chat',
                       child: Row(
                         children: [
-                          Icon(Icons.delete_outline, color:themeProvider.getTextColor(context)),
+                          Icon(Icons.delete_outline, color: colors.text),
                           SizedBox(width: 12),
                           Text(
                             'Clear Chat',
-                            style: TextStyle(color: themeProvider.getTextColor(context)),
+                            style: TextStyle(color: colors.text),
                           ),
                         ],
                       ),
                     ),
-                     PopupMenuItem(
+                    PopupMenuItem(
                       value: 'settings',
                       child: Row(
                         children: [
-                          Icon(Icons.settings_outlined, color: themeProvider.getTextColor(context)),
+                          Icon(Icons.settings_outlined, color: colors.text),
                           SizedBox(width: 12),
                           Text(
                             'Settings',
-                            style: TextStyle(color: themeProvider.getTextColor(context)),
+                            style: TextStyle(color: colors.text),
                           ),
                         ],
                       ),
@@ -113,17 +114,14 @@ class _ChatScreenState extends State<ChatScreen> {
 
                 switch (result) {
                   case 'new_chat':
-                    // Create new session
                     context.read<ChatProvider>().startNewChat();
                     break;
 
                   case 'clear_chat':
-                    // Clear current chat messages
                     context.read<ChatProvider>().clearChat();
                     break;
 
                   case 'settings':
-                    // Settings not implemented yet
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Settings coming soon!'),
@@ -152,19 +150,28 @@ class _ChatScreenState extends State<ChatScreen> {
     required IconData icon,
     required VoidCallback onTap,
   }) {
-     final themeProvider = Provider.of<ThemeProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
+    final isDarkMode = themeProvider.isDarkMode;
+    
     return Material(
-      color: Theme.of(context).primaryColor, 
+      color: isDarkMode ? colors.surface : colors.primary,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(50),
-        side: BorderSide(color: Theme.of(context).primaryColor.withOpacity(0.5), width: 2),
+        side: BorderSide(
+          color: isDarkMode ? colors.border : colors.primary.withOpacity(0.5), 
+          width: 2
+        ),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(50),
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.all(10),
-          child: Icon(icon, color: themeProvider.getSurfaceColor(context)),
+          child: Icon(
+            icon, 
+            color: isDarkMode ? colors.text : colors.surface,
+          ),
         ),
       ),
     );
@@ -172,8 +179,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildChatArea() {
     final themeProvider = Provider.of<ThemeProvider>(context);
-  final isDarkMode = themeProvider.isDarkMode;
-  
+    final isDarkMode = themeProvider.isDarkMode;
+    
     return Consumer<ChatProvider>(
       builder: (context, chatProvider, child) {
         if (chatProvider.messages.isEmpty) {
@@ -185,10 +192,10 @@ class _ChatScreenState extends State<ChatScreen> {
             return LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-               colors: isDarkMode
+              colors: isDarkMode
                 ? const [Colors.transparent, Colors.black, Colors.black]
                 : const [Colors.transparent, Colors.white, Colors.white],
-            stops: const [0.0, 0.12, 1.0],
+              stops: const [0.0, 0.12, 1.0],
             ).createShader(rect);
           },
           blendMode: BlendMode.dstIn,
@@ -204,7 +211,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 chatProvider.messages.length + (chatProvider.isLoading ? 1 : 0),
             itemBuilder: (context, index) {
               if (index == chatProvider.messages.length) {
-                return const _LoadingBubble();
+                return _LoadingBubble();
               }
               return _MessageBubble(message: chatProvider.messages[index]);
             },
@@ -216,7 +223,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   // Empty state
   Widget _buildEmptyState() {
-     final themeProvider = Provider.of<ThemeProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
+    
     return Container(
       width: double.infinity,
       padding: EdgeInsets.only(
@@ -240,7 +249,7 @@ class _ChatScreenState extends State<ChatScreen> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.deepPurple.withOpacity(0.3),
+                  color: colors.primary.withOpacity(0.3),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -259,7 +268,7 @@ class _ChatScreenState extends State<ChatScreen> {
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w600,
-              color: themeProvider.getTextColor(context),
+              color: colors.text,
               letterSpacing: -0.5,
             ),
           ),
@@ -272,7 +281,7 @@ class _ChatScreenState extends State<ChatScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 15,
-                color: themeProvider.getSubtextColor(context),
+                color: colors.subtext,
                 height: 1.5,
               ),
             ),
@@ -311,19 +320,20 @@ class _ChatScreenState extends State<ChatScreen> {
     required bool isActive,
   }) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-  final isDarkMode = themeProvider.isDarkMode;
-  
+    final colors = themeProvider.colors;
+    final isDarkMode = themeProvider.isDarkMode;
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-      color: isActive
-            ? Colors.deepPurple.withOpacity(0.1)
-            : (isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100),
+        color: isActive
+            ? colors.primary.withOpacity(0.1)
+            : (isDarkMode ? colors.card : Colors.grey.shade100),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-         color: isActive
-              ? Colors.deepPurple.shade200
-              : (isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300),
+          color: isActive
+              ? colors.primary.withOpacity(0.5)
+              : (isDarkMode ? colors.border : Colors.grey.shade300),
           width: 1,
         ),
       ),
@@ -333,7 +343,7 @@ class _ChatScreenState extends State<ChatScreen> {
           Icon(
             icon,
             size: 16,
-           color: isActive ? Colors.deepPurple : themeProvider.getSubtextColor(context),
+            color: isActive ? colors.primary : colors.subtext,
           ),
           const SizedBox(width: 6),
           Text(
@@ -341,7 +351,7 @@ class _ChatScreenState extends State<ChatScreen> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: isActive ? Colors.deepPurple : themeProvider.getSubtextColor(context),
+              color: isActive ? colors.primary : colors.subtext,
             ),
           ),
         ],
@@ -350,7 +360,8 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildFloatingInput() {
-     final themeProvider = Provider.of<ThemeProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
     final isDarkMode = themeProvider.isDarkMode;
     
     return Row(
@@ -358,26 +369,26 @@ class _ChatScreenState extends State<ChatScreen> {
         Expanded(
           child: Material(
             elevation: 4,
-            shadowColor: Colors.black.withOpacity(0.1),
+            shadowColor: isDarkMode ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.1),
             borderRadius: BorderRadius.circular(28),
             child: Container(
               decoration: BoxDecoration(
-               color: themeProvider.getSurfaceColor(context).withOpacity(0.95),
+                color: colors.surface.withOpacity(0.95),
                 borderRadius: BorderRadius.circular(28),
-                border: Border.all( color: themeProvider.getBorderColor(context), width: 1),
+                border: Border.all(color: colors.border, width: 1),
               ),
               child: TextField(
                 controller: _controller,
                 onSubmitted: (_) => _sendMessage(),
-                 style: TextStyle(
+                style: TextStyle(
                   fontSize: 15,
-                  color: themeProvider.getTextColor(context),
+                  color: colors.text,
                 ),
                 decoration: InputDecoration(
                   hintText: context.watch<ChatProvider>().mode == 'summarize'
                       ? 'Paste text to summarize...'
                       : 'Ask anything...',
-                  hintStyle: TextStyle(color: themeProvider.getHintColor(context)),
+                  hintStyle: TextStyle(color: colors.hint),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 20,
@@ -386,7 +397,6 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 maxLines: 4,
                 minLines: 1,
-               
               ),
             ),
           ),
@@ -394,11 +404,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
         const SizedBox(width: 8),
 
+        // Send button - now uses theme colors
         Material(
-          color: themeProvider.getSurfaceColor(context).withOpacity(0.95),
+          color: isDarkMode ? colors.primary : colors.surface,
           elevation: 4,
           borderRadius: BorderRadius.circular(14),
-          shadowColor: Colors.black.withOpacity(0.1),
+          shadowColor: isDarkMode ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.1),
           child: InkWell(
             borderRadius: BorderRadius.circular(14),
             onTap: _sendMessage,
@@ -407,21 +418,24 @@ class _ChatScreenState extends State<ChatScreen> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: Colors.deepPurple.shade200,
+                  color: colors.primary.withOpacity(0.5),
                   width: 1.5,
                 ),
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.deepPurple.shade400,
-                    Colors.deepPurple.shade600,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                gradient: isDarkMode 
+                    ? null  // No gradient in dark mode, use solid color
+                    : LinearGradient(
+                        colors: [
+                          colors.primary,
+                          colors.primary.withOpacity(0.8),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                color: isDarkMode ? colors.primary : null,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.send_rounded,
-                color: Colors.white,
+                color: isDarkMode ? colors.text : Colors.white,
                 size: 22,
               ),
             ),
@@ -458,7 +472,8 @@ class _MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isUser = message.isUser;
-final themeProvider = Provider.of<ThemeProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
     final isDarkMode = themeProvider.isDarkMode;
 
     if (!isUser) {
@@ -477,8 +492,8 @@ final themeProvider = Provider.of<ThemeProvider>(context);
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          Colors.deepPurple.shade300,
-                          Colors.deepPurple.shade500,
+                          colors.primary,
+                          colors.primary.withOpacity(0.7),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(8),
@@ -495,7 +510,7 @@ final themeProvider = Provider.of<ThemeProvider>(context);
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: themeProvider.getSubtextColor(context),
+                      color: colors.subtext,
                     ),
                   ),
                 ],
@@ -511,11 +526,13 @@ final themeProvider = Provider.of<ThemeProvider>(context);
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                 color: isDarkMode ? Colors.orange.withOpacity(0.2) : Colors.orange.shade50,
+                  color: isDarkMode 
+                      ? colors.primary.withOpacity(0.2) 
+                      : colors.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                    color: isDarkMode ? Colors.orange.withOpacity(0.5) : Colors.orange.shade200,
-                 width: 0.5,
+                  border: Border.all(
+                    color: colors.primary.withOpacity(0.3),
+                    width: 0.5,
                   ),
                 ),
                 child: Row(
@@ -524,14 +541,14 @@ final themeProvider = Provider.of<ThemeProvider>(context);
                     Icon(
                       Icons.summarize,
                       size: 14,
-                     color: isDarkMode ? Colors.orange.shade300 : Colors.orange.shade700,
+                      color: colors.primary,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       'Summary',
                       style: TextStyle(
                         fontSize: 12,
-                       color: isDarkMode ? Colors.orange.shade300 : Colors.orange.shade700,
+                        color: colors.primary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -540,7 +557,7 @@ final themeProvider = Provider.of<ThemeProvider>(context);
               ),
 
             // Rich text with bold formatting only
-            _buildRichText(context, message.content),
+            _buildRichText(context, message.content, colors),
 
             // Timestamp
             Padding(
@@ -549,7 +566,7 @@ final themeProvider = Provider.of<ThemeProvider>(context);
                 '${message.timestamp.hour}:${message.timestamp.minute.toString().padLeft(2, '0')}',
                 style: TextStyle(
                   fontSize: 11,
-                  color: themeProvider.getSubtextColor(context),
+                  color: colors.subtext,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -572,9 +589,9 @@ final themeProvider = Provider.of<ThemeProvider>(context);
               maxWidth: MediaQuery.of(context).size.width * 0.8,
             ),
             decoration: BoxDecoration(
-               color: isDarkMode 
-                  ? Colors.deepPurple.withOpacity(0.3)
-                  : Colors.deepPurple.shade50,
+              color: isDarkMode 
+                  ? colors.primary.withOpacity(0.2)
+                  : colors.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(
                 20,
               ).copyWith(bottomRight: Radius.zero),
@@ -584,7 +601,7 @@ final themeProvider = Provider.of<ThemeProvider>(context);
               style: TextStyle(
                 fontSize: 15,
                 height: 1.5,
-               color: themeProvider.getTextColor(context),
+                color: colors.text,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -597,7 +614,7 @@ final themeProvider = Provider.of<ThemeProvider>(context);
               '${message.timestamp.hour}:${message.timestamp.minute.toString().padLeft(2, '0')}',
               style: TextStyle(
                 fontSize: 11,
-               color: themeProvider.getSubtextColor(context),
+                color: colors.subtext,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -607,10 +624,7 @@ final themeProvider = Provider.of<ThemeProvider>(context);
     );
   }
 
-  
-    Widget _buildRichText(BuildContext context, String text) {
-      final themeProvider = Provider.of<ThemeProvider>(context);
-    
+  Widget _buildRichText(BuildContext context, String text, AppColors colors) {
     List<TextSpan> spans = [];
     RegExp exp = RegExp(r'\*\*(.*?)\*\*');
     Iterable<RegExpMatch> matches = exp.allMatches(text);
@@ -626,7 +640,7 @@ final themeProvider = Provider.of<ThemeProvider>(context);
             style: TextStyle(
               fontSize: 15,
               height: 1.6,
-              color: themeProvider.getTextColor(context),
+              color: colors.text,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -641,7 +655,7 @@ final themeProvider = Provider.of<ThemeProvider>(context);
           style: TextStyle(
             fontSize: 16,
             height: 1.6,
-             color: themeProvider.getTextColor(context),
+            color: colors.text,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -658,7 +672,7 @@ final themeProvider = Provider.of<ThemeProvider>(context);
           style: TextStyle(
             fontSize: 15,
             height: 1.6,
-            color: themeProvider.getTextColor(context),
+            color: colors.text,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -672,7 +686,7 @@ final themeProvider = Provider.of<ThemeProvider>(context);
         style: TextStyle(
           fontSize: 15,
           height: 1.6,
-        color: themeProvider.getTextColor(context),
+          color: colors.text,
           fontWeight: FontWeight.w600,
         ),
       );
@@ -684,11 +698,10 @@ final themeProvider = Provider.of<ThemeProvider>(context);
 
 // Loading bubble widget
 class _LoadingBubble extends StatelessWidget {
-  const _LoadingBubble();
-
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
     
     return Padding(
       padding: const EdgeInsets.only(bottom: 28),
@@ -705,8 +718,8 @@ class _LoadingBubble extends StatelessWidget {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Colors.deepPurple.shade300,
-                        Colors.deepPurple.shade500,
+                        colors.primary,
+                        colors.primary.withOpacity(0.7),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(8),
@@ -723,7 +736,7 @@ class _LoadingBubble extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                     color: themeProvider.getSubtextColor(context),
+                    color: colors.subtext,
                   ),
                 ),
               ],
@@ -738,13 +751,13 @@ class _LoadingBubble extends StatelessWidget {
                 height: 16,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Colors.deepPurple.shade300,
+                  color: colors.primary,
                 ),
               ),
               const SizedBox(width: 12),
               Text(
                 'Thinking...',
-                style: TextStyle(color: themeProvider.getSubtextColor(context), fontSize: 14),
+                style: TextStyle(color: colors.subtext, fontSize: 14),
               ),
             ],
           ),

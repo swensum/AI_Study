@@ -331,7 +331,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       trailing: Switch(
         value: value,
         onChanged: onChanged,
-        activeColor: Colors.deepPurple,
+        activeThumbColor: Colors.deepPurple,
       ),
     );
   }
@@ -367,7 +367,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         onChanged: (value) {
           themeProvider.toggleTheme(); // This toggles the theme globally
         },
-        activeColor: Colors.deepPurple,
+        activeThumbColor: Colors.deepPurple,
       ),
     );
   }
