@@ -313,51 +313,54 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
   }
-
-  Widget _buildModeChip({
-    required IconData icon,
-    required String label,
-    required bool isActive,
-  }) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final colors = themeProvider.colors;
-    final isDarkMode = themeProvider.isDarkMode;
-    
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
+Widget _buildModeChip({
+  required IconData icon,
+  required String label,
+  required bool isActive,
+}) {
+  final themeProvider = Provider.of<ThemeProvider>(context);
+  final colors = themeProvider.colors;
+  final isDarkMode = themeProvider.isDarkMode;
+  
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    decoration: BoxDecoration(
+      color: isActive
+          ? (isDarkMode ? Colors.grey.shade700 : colors.primary.withOpacity(0.2))
+          : (isDarkMode ? colors.card : Colors.grey.shade100),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(
         color: isActive
-            ? colors.primary.withOpacity(0.1)
-            : (isDarkMode ? colors.card : Colors.grey.shade100),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
+            ? (isDarkMode ? Colors.grey.shade500 : colors.primary)
+            : (isDarkMode ? colors.border : Colors.grey.shade300),
+        width: isActive ? 1.5 : 1,
+      ),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 16,
           color: isActive
-              ? colors.primary.withOpacity(0.5)
-              : (isDarkMode ? colors.border : Colors.grey.shade300),
-          width: 1,
+              ? (isDarkMode ? Colors.white : colors.primary)
+              : colors.subtext,
         ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 16,
-            color: isActive ? colors.primary : colors.subtext,
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: isActive
+                ? (isDarkMode ? Colors.white : colors.primary)
+                : colors.subtext,
           ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: isActive ? colors.primary : colors.subtext,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildFloatingInput() {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -384,6 +387,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   fontSize: 15,
                   color: colors.text,
                 ),
+                cursorColor: isDarkMode ? Colors.white : colors.primary,
                 decoration: InputDecoration(
                   hintText: context.watch<ChatProvider>().mode == 'summarize'
                       ? 'Paste text to summarize...'
@@ -404,43 +408,32 @@ class _ChatScreenState extends State<ChatScreen> {
 
         const SizedBox(width: 8),
 
-        // Send button - now uses theme colors
-        Material(
-          color: isDarkMode ? colors.primary : colors.surface,
-          elevation: 4,
-          borderRadius: BorderRadius.circular(14),
-          shadowColor: isDarkMode ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.1),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(14),
-            onTap: _sendMessage,
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: colors.primary.withOpacity(0.5),
-                  width: 1.5,
-                ),
-                gradient: isDarkMode 
-                    ? null  // No gradient in dark mode, use solid color
-                    : LinearGradient(
-                        colors: [
-                          colors.primary,
-                          colors.primary.withOpacity(0.8),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                color: isDarkMode ? colors.primary : null,
-              ),
-              child: Icon(
-                Icons.send_rounded,
-                color: isDarkMode ? colors.text : Colors.white,
-                size: 22,
-              ),
-            ),
-          ),
+     
+Material(
+  color: isDarkMode ? colors.surface : colors.primary,
+  elevation: 4,
+  borderRadius: BorderRadius.circular(14),
+  shadowColor: isDarkMode ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.1),
+  child: InkWell(
+    borderRadius: BorderRadius.circular(14),
+    onTap: _sendMessage,
+    child: Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDarkMode ? colors.border : colors.primary.withOpacity(0.5),
+          width: 1.5,
         ),
+      ),
+      child: Icon(
+        Icons.send_rounded,
+        color: isDarkMode ? colors.text : Colors.white,
+        size: 22,
+      ),
+    ),
+  ),
+),
       ],
     );
   }
@@ -477,6 +470,7 @@ class _MessageBubble extends StatelessWidget {
     final isDarkMode = themeProvider.isDarkMode;
 
     if (!isUser) {
+         // AI MESSAGE
       return Padding(
         padding: const EdgeInsets.only(bottom: 28),
         child: Column(
@@ -517,45 +511,6 @@ class _MessageBubble extends StatelessWidget {
               ),
             ),
 
-            // Summary badge
-            if (message.isSummary)
-              Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: isDarkMode 
-                      ? colors.primary.withOpacity(0.2) 
-                      : colors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: colors.primary.withOpacity(0.3),
-                    width: 0.5,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.summarize,
-                      size: 14,
-                      color: colors.primary,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Summary',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
             // Rich text with bold formatting only
             _buildRichText(context, message.content, colors),
 
@@ -590,8 +545,8 @@ class _MessageBubble extends StatelessWidget {
             ),
             decoration: BoxDecoration(
               color: isDarkMode 
-                  ? colors.primary.withOpacity(0.2)
-                  : colors.primary.withOpacity(0.1),
+                  ? Colors.grey.shade800  
+                  : colors.primary.withOpacity(0.1), 
               borderRadius: BorderRadius.circular(
                 20,
               ).copyWith(bottomRight: Radius.zero),
