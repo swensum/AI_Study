@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:study_assistant/screens/profilescreen.dart';
 import '../providers/chat_provider.dart';
 import '../models/chat_session.dart';
+import '../widgets/theme.dart'; // Add this import
 
 class SidebarDrawer extends StatefulWidget {
   const SidebarDrawer({super.key});
@@ -13,7 +14,7 @@ class SidebarDrawer extends StatefulWidget {
 
 class _SidebarDrawerState extends State<SidebarDrawer> {
   String _searchQuery = '';
-  bool _isSearching = false; // Add this flag
+  bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
 
@@ -26,9 +27,13 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
+    final isDarkMode = themeProvider.isDarkMode;
+    
     return Drawer(
       width: MediaQuery.of(context).size.width,
-      backgroundColor: Colors.white,
+      backgroundColor: colors.surface,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,7 +56,6 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
             Expanded(
               child: Consumer<ChatProvider>(
                 builder: (context, chatProvider, child) {
-                  // Filter sessions based on search query
                   final filteredSessions = _searchQuery.isEmpty
                       ? chatProvider.sessions
                       : chatProvider.sessions.where((session) =>
@@ -76,7 +80,6 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
                         isActive: isActive,
                         searchQuery: _searchQuery,
                         onTap: () {
-                          // Clear search when selecting a session
                           setState(() {
                             _isSearching = false;
                             _searchQuery = '';
@@ -98,7 +101,8 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
 
             const Spacer(),
 
-            const Divider(height: 1),
+            Divider(height: 1,
+  color: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade400,),
             _buildFooter(),
           ],
         ),
@@ -107,18 +111,23 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
   }
 
   Widget _buildSearchBar() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
+    final isDarkMode = themeProvider.isDarkMode;
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.grey.shade50,
+          color: isDarkMode ? colors.card : Colors.grey.shade50,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.deepPurple.shade100),
+          border: Border.all(color: isDarkMode ? colors.border : colors.primary.withOpacity(0.3)),
         ),
         child: TextField(
           controller: _searchController,
           focusNode: _searchFocusNode,
           autofocus: true,
+          style: TextStyle(color: colors.text),
           onChanged: (value) {
             setState(() {
               _searchQuery = value;
@@ -126,11 +135,11 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
           },
           decoration: InputDecoration(
             hintText: 'Search conversations...',
-            hintStyle: TextStyle(color: Colors.grey.shade400),
-            prefixIcon: Icon(Icons.search, size: 20, color: Colors.deepPurple.shade400),
+            hintStyle: TextStyle(color: colors.hint),
+            prefixIcon: Icon(Icons.search, size: 20, color: colors.primary),
             suffixIcon: _searchQuery.isNotEmpty
                 ? IconButton(
-                    icon: Icon(Icons.close, size: 20, color: Colors.grey.shade400),
+                    icon: Icon(Icons.close, size: 20, color: colors.hint),
                     onPressed: () {
                       setState(() {
                         _searchQuery = '';
@@ -139,7 +148,7 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
                     },
                   )
                 : IconButton(
-                    icon: Icon(Icons.close, size: 20, color: Colors.black),
+                    icon: Icon(Icons.close, size: 20, color: colors.subtext),
                     onPressed: () {
                       setState(() {
                         _isSearching = false;
@@ -158,11 +167,16 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
   }
 
   void _showDeleteDialog(BuildContext context, String sessionId, ChatProvider chatProvider) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
+    final isDarkMode = themeProvider.isDarkMode;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Chat'),
-        content: const Text('Are you sure you want to delete this conversation?'),
+        title: Text('Delete Chat', style: TextStyle(color: colors.text)),
+        content: Text('Are you sure you want to delete this conversation?', style: TextStyle(color: colors.subtext)),
+        backgroundColor: colors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -172,7 +186,7 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
             child: Text(
               'Cancel',
               style: TextStyle(
-                color: Colors.grey.shade600,
+                color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -198,12 +212,16 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
   }
 
   Widget _buildHeader() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
+    final isDarkMode = themeProvider.isDarkMode;
+    
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.school, color: Colors.deepPurple.shade400, size: 32),
+          Icon(Icons.school, color: colors.primary, size: 32),
           const SizedBox(width: 12),
 
           Column(
@@ -214,7 +232,7 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade800,
+                  color: colors.text,
                 ),
               ),
               const SizedBox(height: 4),
@@ -222,7 +240,7 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
                 'Your personal AI tutor',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey.shade800,
+                  color: colors.subtext,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -233,121 +251,133 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
             decoration: BoxDecoration(
-              color: const Color(0xFFF4F1FF),
+              color: isDarkMode ? colors.card : const Color(0xFFF4F1FF),
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.deepPurple.withOpacity(0.08),
+                  color: colors.primary.withOpacity(0.08),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
               ],
-              border: Border.all(color: Colors.deepPurple.shade100, width: 1),
+              border: Border.all(color: isDarkMode ? colors.border : colors.primary.withOpacity(0.3), width: 1),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                InkWell(
-                  borderRadius: BorderRadius.circular(20),
-                  onTap: () {
-                    setState(() {
-                      _isSearching = true;
-                      _searchFocusNode.requestFocus();
-                    });
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(6),
-                    child: Icon(
-                      Icons.search,
-                      size: 22,
-                      color: Colors.deepPurple.shade400,
-                    ),
-                  ),
-                ),
+           child: Row(
+  mainAxisSize: MainAxisSize.min,
+  children: [
+    InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: () {
+        setState(() {
+          _isSearching = true;
+          _searchFocusNode.requestFocus();
+        });
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(6),
+        child: Icon(
+          Icons.search,
+          size: 22,
+          color: isDarkMode ? Colors.white : colors.primary,
+        ),
+      ),
+    ),
 
-                const SizedBox(width: 2),
+    const SizedBox(width: 2),
 
-                Container(
-                  width: 1,
-                  height: 18,
-                  color: Colors.deepPurple.shade100,
-                ),
+    Container(
+      width: 1,
+      height: 18,
+      color: isDarkMode ? Colors.grey.shade600 : colors.primary.withOpacity(0.3),
+    ),
 
-                const SizedBox(width: 2),
+    const SizedBox(width: 2),
 
-                InkWell(
-                  borderRadius: BorderRadius.circular(20),
-                  onTap: () {
-                     Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const ProfileScreen()),
-    );
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(6),
-                    child: Icon(
-                      Icons.person_outline,
-                      size: 22,
-                      color: Colors.deepPurple.shade600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+    InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ProfileScreen()),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(6),
+        child: Icon(
+          Icons.person_outline,
+          size: 22,
+          color: isDarkMode ? Colors.white : colors.primary,
+        ),
+      ),
+    ),
+  ],
+),
           ),
         ],
       ),
     );
   }
-
-  Widget _buildNewChatButton(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          setState(() {
-            _isSearching = false;
-            _searchQuery = '';
-            _searchController.clear();
-            _searchFocusNode.unfocus();
-          });
-          context.read<ChatProvider>().startNewChat();
-          Navigator.pop(context);
-        },
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.deepPurple.shade400,
-                Colors.deepPurple.shade600,
-              ],
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.add, color: Colors.white, size: 20),
-              SizedBox(width: 8),
-              Text(
-                'New Chat',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
+Widget _buildNewChatButton(BuildContext context) {
+  final themeProvider = Provider.of<ThemeProvider>(context);
+  final colors = themeProvider.colors;
+  final isDarkMode = themeProvider.isDarkMode;
+  
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () {
+        setState(() {
+          _isSearching = false;
+          _searchQuery = '';
+          _searchController.clear();
+          _searchFocusNode.unfocus();
+        });
+        context.read<ChatProvider>().startNewChat();
+        Navigator.pop(context);
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          gradient: isDarkMode
+              ? null
+              : LinearGradient(
+                  colors: [
+                    colors.primary,
+                    colors.primary.withOpacity(0.8),
+                  ],
                 ),
+          color: isDarkMode ? Colors.grey.shade800 : null,
+          borderRadius: BorderRadius.circular(12),
+          border: isDarkMode 
+              ? Border.all(color: Colors.grey.shade700, width: 1)
+              : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add, color: isDarkMode ? Colors.white : Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              'New Chat',
+              style: TextStyle(
+                color: isDarkMode ? Colors.white : Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSectionTitle(String title) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
+    
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Text(
@@ -355,7 +385,7 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
         style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: Colors.grey.shade800,
+          color: colors.subtext,
           letterSpacing: 1,
         ),
       ),
@@ -363,6 +393,9 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
   }
 
   Widget _buildEmptyHistory(bool isSearching) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
+    
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -372,13 +405,13 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
             Icon(
               isSearching ? Icons.search_off : Icons.chat_bubble_outline,
               size: 48,
-              color: Colors.grey.shade300,
+              color: colors.hint,
             ),
             const SizedBox(height: 12),
             Text(
               isSearching ? 'No matching conversations' : 'No chat history yet',
               style: TextStyle(
-                color: Colors.grey.shade400,
+                color: colors.hint,
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -396,11 +429,17 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
     required VoidCallback onTap,
     required VoidCallback onLongPress,
   }) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
+    final isDarkMode = themeProvider.isDarkMode;
+    
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 1, vertical: 2),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        color: isActive ? Colors.deepPurple.shade50 : Colors.transparent,
+        color: isActive 
+            ? (isDarkMode ? colors.card : colors.primary.withOpacity(0.1))
+            : Colors.transparent,
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
@@ -413,7 +452,9 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
               Icon(
                 Icons.chat_bubble_outline,
                 size: 16,
-                color: isActive ? Colors.deepPurple : Colors.grey.shade500,
+                color: isActive 
+                    ? (isDarkMode ? Colors.white : colors.primary)
+                    : colors.subtext,
               ),
               const SizedBox(width: 12),
               Flexible(
@@ -431,12 +472,13 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                              color: isActive ? Colors.deepPurple : Colors.grey.shade700,
+                              color: isActive 
+                                  ? (isDarkMode ? Colors.white : colors.primary)
+                                  : colors.text,
                             ),
                           );
                         }
                         
-                        // Highlight matching text
                         final title = session.title;
                         final query = searchQuery.toLowerCase();
                         final titleLower = title.toLowerCase();
@@ -454,7 +496,9 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                                color: isActive ? Colors.deepPurple : Colors.grey.shade700,
+                                color: isActive 
+                                    ? (isDarkMode ? Colors.white : colors.primary)
+                                    : colors.text,
                               ),
                             ));
                           }
@@ -464,8 +508,10 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
-                              color: Colors.deepPurple,
-                              backgroundColor: Colors.deepPurple.shade50,
+                              color: colors.primary,
+                              backgroundColor: isDarkMode 
+                                  ? colors.primary.withOpacity(0.3)
+                                  : colors.primary.withOpacity(0.1),
                             ),
                           ));
                           
@@ -478,7 +524,9 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                              color: isActive ? Colors.deepPurple : Colors.grey.shade700,
+                              color: isActive 
+                                  ? (isDarkMode ? Colors.white : colors.primary)
+                                  : colors.text,
                             ),
                           ));
                         }
@@ -495,7 +543,7 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
                       _formatDate(session.updatedAt),
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.grey.shade500,
+                        color: colors.subtext,
                       ),
                     ),
                   ],
@@ -524,15 +572,18 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
   }
 
   Widget _buildFooter() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
+    
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          Icon(Icons.auto_awesome, size: 16, color: Colors.deepPurple.shade300),
+          Icon(Icons.auto_awesome, size: 16, color: colors.primary),
           const SizedBox(width: 8),
           Text(
             'Powered by AI',
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+            style: TextStyle(fontSize: 12, color: colors.subtext),
           ),
         ],
       ),
