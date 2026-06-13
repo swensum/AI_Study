@@ -11,18 +11,20 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _notificationsEnabled = true;
-  String _selectedLanguage = 'English';
 
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
+    final isDarkMode = themeProvider.isDarkMode;
+    
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: colors.background,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.grey.shade800),
+          icon: Icon(Icons.arrow_back, color: colors.text),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -30,7 +32,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,
-            color: Colors.grey.shade800,
+            color: colors.text,
           ),
         ),
         centerTitle: true,
@@ -41,9 +43,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // Profile Header
             _buildProfileHeader(),
             const SizedBox(height: 24),
-            
-            // Stats Cards
-           
             
             // Account Settings Section
             _buildSectionTitle('Account Settings'),
@@ -68,19 +67,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 });
               },
             ),
-             _buildDarkModeSwitch(themeProvider), // Updated dark mode switch
-            _buildDropdownMenuItem(
-              icon: Icons.language,
-              title: 'Language',
-              subtitle: 'Choose your preferred language',
-              value: _selectedLanguage,
-              items: ['English', 'Spanish', 'French', 'German', 'Hindi'],
-              onChanged: (value) {
-                setState(() {
-                  _selectedLanguage = value;
-                });
-              },
-            ),
+            _buildDarkModeSwitch(themeProvider),
+            
             
             // Support Section
             _buildSectionTitle('Support'),
@@ -114,41 +102,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             
             const SizedBox(height: 24),
-            
-            // Sign Out Button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () {
-                  _showSignOutDialog(context);
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.red.shade200),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.logout, size: 20, color: Colors.red.shade600),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Sign Out',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.red.shade600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+           // Sign Out Button
+Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+  child: InkWell(
+    borderRadius: BorderRadius.circular(12),
+    onTap: () {
+      _showSignOutDialog(context);
+    },
+    child: Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      decoration: BoxDecoration(
+        color: isDarkMode 
+            ? colors.card  // Use card color (grey) in dark mode
+            : Colors.red.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDarkMode 
+              ? colors.border  // Use border color in dark mode
+              : Colors.red.shade200,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.logout, 
+            size: 20, 
+            color: isDarkMode ? colors.text : Colors.red.shade600,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'Sign Out',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: isDarkMode ? colors.text : Colors.red.shade600,
             ),
+          ),
+        ],
+      ),
+    ),
+  ),
+),
             
             const SizedBox(height: 32),
           ],
@@ -158,6 +155,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildProfileHeader() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
+    final isDarkMode = themeProvider.isDarkMode;
+    
     return Container(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -167,8 +168,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.deepPurple.shade400,
-                  Colors.deepPurple.shade600,
+                  colors.primary,
+                  colors.primary.withOpacity(0.7),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -176,13 +177,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.deepPurple.withOpacity(0.3),
+                  color: colors.primary.withOpacity(0.3),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
               ],
             ),
-            child: const CircleAvatar(
+            child: CircleAvatar(
               radius: 50,
               backgroundColor: Colors.transparent,
               child: Icon(
@@ -200,10 +201,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.grey.shade800,
+              color: colors.text,
             ),
           ),
-          
           
           const SizedBox(height: 12),
           
@@ -211,9 +211,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.deepPurple.shade50,
+              color: isDarkMode 
+                  ? colors.card
+                  : colors.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.deepPurple.shade200),
+              border: Border.all(
+                color: isDarkMode 
+                    ? colors.border
+                    : colors.primary.withOpacity(0.3),
+              ),
             ),
             child: InkWell(
               borderRadius: BorderRadius.circular(20),
@@ -221,14 +227,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.edit, size: 16, color: Colors.deepPurple),
+                  Icon(Icons.edit, size: 16, color: colors.primary),
                   const SizedBox(width: 6),
                   Text(
                     'Edit Profile',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Colors.deepPurple,
+                      color: colors.primary,
                     ),
                   ),
                 ],
@@ -240,11 +246,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  
-
- 
-
   Widget _buildSectionTitle(String title) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
+    
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Row(
@@ -254,186 +259,168 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: Colors.grey.shade700,
+              color: colors.subtext,
             ),
           ),
         ],
       ),
     );
   }
-
-  Widget _buildMenuItem({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, size: 22, color: Colors.deepPurple.shade600),
+Widget _buildMenuItem({
+  required IconData icon,
+  required String title,
+  required String subtitle,
+  required VoidCallback onTap,
+}) {
+  final themeProvider = Provider.of<ThemeProvider>(context);
+  final colors = themeProvider.colors;
+  final isDarkMode = themeProvider.isDarkMode;
+  
+  return ListTile(
+    leading: Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: isDarkMode ? colors.card : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(10),
       ),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: Colors.grey.shade800,
-        ),
+      child: Icon(
+        icon, 
+        size: 22, 
+        color: isDarkMode ? Colors.white : colors.primary,
       ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(
-          fontSize: 13,
-          color: Colors.grey.shade500,
-        ),
+    ),
+    title: Text(
+      title,
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: colors.text,
       ),
-      trailing: Icon(Icons.chevron_right, color: Colors.grey.shade400),
-      onTap: onTap,
-    );
-  }
+    ),
+    subtitle: Text(
+      subtitle,
+      style: TextStyle(
+        fontSize: 13,
+        color: colors.subtext,
+      ),
+    ),
+    trailing: Icon(Icons.chevron_right, color: colors.hint),
+    onTap: onTap,
+  );
+}
 
   Widget _buildSwitchMenuItem({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required bool value,
-    required Function(bool) onChanged,
-  }) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, size: 22, color: Colors.deepPurple.shade600),
+  required IconData icon,
+  required String title,
+  required String subtitle,
+  required bool value,
+  required Function(bool) onChanged,
+}) {
+  final themeProvider = Provider.of<ThemeProvider>(context);
+  final colors = themeProvider.colors;
+  final isDarkMode = themeProvider.isDarkMode;
+  
+  return ListTile(
+    leading: Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: isDarkMode ? colors.card : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(10),
       ),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: Colors.grey.shade800,
-        ),
+      child: Icon(
+        icon, 
+        size: 22, 
+        color: isDarkMode ? Colors.white : colors.primary,
       ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(
-          fontSize: 13,
-          color: Colors.grey.shade500,
-        ),
+    ),
+    title: Text(
+      title,
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: colors.text,
       ),
-      trailing: Switch(
-        value: value,
-        onChanged: onChanged,
-        activeThumbColor: Colors.deepPurple,
+    ),
+    subtitle: Text(
+      subtitle,
+      style: TextStyle(
+        fontSize: 13,
+        color: colors.subtext,
       ),
-    );
-  }
-  Widget _buildDarkModeSwitch(ThemeProvider themeProvider) {
-    final isDarkMode = themeProvider.isDarkMode;
-    
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(Icons.dark_mode_outlined, size: 22, color: Colors.deepPurple),
-      ),
-      title: Text(
-        'Dark Mode',
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: isDarkMode ? Colors.white : Colors.grey.shade800,
-        ),
-      ),
-      subtitle: Text(
-        'Switch theme appearance',
-        style: TextStyle(
-          fontSize: 13,
-          color: isDarkMode ? Colors.grey.shade500 : Colors.grey.shade500,
-        ),
-      ),
-      trailing: Switch(
-        value: isDarkMode,
-        onChanged: (value) {
-          themeProvider.toggleTheme(); // This toggles the theme globally
-        },
-        activeThumbColor: Colors.deepPurple,
-      ),
-    );
-  }
+    ),
+    trailing: Switch(
+      value: value,
+      onChanged: onChanged,
+      activeColor: colors.primary,
+    ),
+  );
+}
 
-  Widget _buildDropdownMenuItem({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required String value,
-    required List<String> items,
-    required Function(String) onChanged,
-  }) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, size: 22, color: Colors.deepPurple.shade600),
+  
+ Widget _buildDarkModeSwitch(ThemeProvider themeProvider) {
+  final colors = themeProvider.colors;
+  final isDarkMode = themeProvider.isDarkMode;
+  
+  return ListTile(
+    leading: Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: isDarkMode ? colors.card : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(10),
       ),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: Colors.grey.shade800,
-        ),
+      child: Icon(
+        Icons.dark_mode_outlined, 
+        size: 22, 
+        color: isDarkMode ? Colors.white : colors.primary,
       ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(
-          fontSize: 13,
-          color: Colors.grey.shade500,
-        ),
+    ),
+    title: Text(
+      'Dark Mode',
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: colors.text,
       ),
-      trailing: DropdownButton<String>(
-        value: value,
-        items: items.map((String item) {
-          return DropdownMenuItem<String>(
-            value: item,
-            child: Text(item),
-          );
-        }).toList(),
-        onChanged: (String? newValue) {
-          if (newValue != null) {
-            onChanged(newValue);
-          }
-        },
-        underline: const SizedBox(),
-        icon: Icon(Icons.arrow_drop_down, color: Colors.deepPurple.shade400),
+    ),
+    subtitle: Text(
+      'Switch theme appearance',
+      style: TextStyle(
+        fontSize: 13,
+        color: colors.subtext,
       ),
-    );
-  }
+    ),
+    trailing: Switch(
+      value: isDarkMode,
+      onChanged: (value) {
+        themeProvider.toggleTheme();
+      },
+      activeColor: colors.primary,
+    ),
+  );
+}
 
   void _showFeedbackDialog(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Send Feedback'),
+        backgroundColor: colors.surface,
+        title: Text('Send Feedback', style: TextStyle(color: colors.text)),
         content: TextField(
           maxLines: 5,
+          style: TextStyle(color: colors.text),
           decoration: InputDecoration(
             hintText: 'Share your feedback...',
+            hintStyle: TextStyle(color: colors.hint),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: colors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: colors.border),
             ),
           ),
         ),
@@ -443,7 +430,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: Colors.grey.shade600)),
+            child: Text('Cancel', style: TextStyle(color: colors.subtext)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -456,7 +443,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.deepPurple,
+              backgroundColor: colors.primary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -469,33 +456,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showAboutDialog(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('About'),
+        backgroundColor: colors.surface,
+        title: Text('About', style: TextStyle(color: colors.text)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.auto_awesome, size: 48, color: Colors.deepPurple),
+            Icon(Icons.auto_awesome, size: 48, color: colors.primary),
             const SizedBox(height: 12),
             Text(
               'AI Study Assistant',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey.shade800,
+                color: colors.text,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               'Version 1.0.0',
-              style: TextStyle(color: Colors.grey.shade600),
+              style: TextStyle(color: colors.subtext),
             ),
             const SizedBox(height: 16),
             Text(
               'Your personal AI tutor powered by advanced language models. Get instant answers, summarize text, and enhance your learning experience.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey.shade700, height: 1.5),
+              style: TextStyle(color: colors.text, height: 1.5),
             ),
           ],
         ),
@@ -505,7 +496,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Close', style: TextStyle(color: Colors.deepPurple)),
+            child: Text('Close', style: TextStyle(color: colors.primary)),
           ),
         ],
       ),
@@ -513,22 +504,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showSignOutDialog(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to sign out?'),
+        backgroundColor: colors.surface,
+        title: Text('Sign Out', style: TextStyle(color: colors.text)),
+        content: Text('Are you sure you want to sign out?', style: TextStyle(color: colors.subtext)),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: Colors.grey.shade600)),
+            child: Text('Cancel', style: TextStyle(color: colors.subtext)),
           ),
           TextButton(
             onPressed: () {
-              // Add sign out logic here
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
