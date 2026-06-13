@@ -302,89 +302,97 @@ class _ProfileScreenState extends State<ProfileScreen> {
       onTap: onTap,
     );
   }
+Widget _buildSwitchMenuItem({
+  required IconData icon,
+  required String title,
+  required String subtitle,
+  required bool value,
+  required Function(bool) onChanged,
+}) {
+  final themeProvider = Provider.of<ThemeProvider>(context);
+  final colors = themeProvider.colors;
+  final isDarkMode = themeProvider.isDarkMode;
 
-  Widget _buildSwitchMenuItem({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required bool value,
-    required Function(bool) onChanged,
-  }) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final colors = themeProvider.colors;
-    final isDarkMode = themeProvider.isDarkMode;
-
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: isDarkMode ? colors.card : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(
-          icon,
-          size: 22,
-          color: isDarkMode ? Colors.white : colors.primary,
-        ),
+  return ListTile(
+    leading: Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: isDarkMode ? colors.card : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(10),
       ),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: colors.text,
-        ),
+      child: Icon(
+        icon,
+        size: 22,
+        color: isDarkMode ? Colors.white : colors.primary,
       ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(fontSize: 13, color: colors.subtext),
+    ),
+    title: Text(
+      title,
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: colors.text,
       ),
-      trailing: Switch(
-        value: value,
-        onChanged: onChanged,
-        activeColor: colors.primary,
-      ),
-    );
-  }
+    ),
+    subtitle: Text(
+      subtitle,
+      style: TextStyle(fontSize: 13, color: colors.subtext),
+    ),
+    trailing: Switch(
+      value: value,
+      onChanged: onChanged,
+      activeColor: isDarkMode ? Colors.grey.shade400 : colors.primary,
+      activeTrackColor: isDarkMode ? Colors.grey.shade700 : null,
+      inactiveThumbColor: isDarkMode ? Colors.grey.shade400 : null,
+      inactiveTrackColor: isDarkMode ? Colors.grey.shade800 : null,
+    ),
+  );
+}
 
   Widget _buildDarkModeSwitch(ThemeProvider themeProvider) {
-    final colors = themeProvider.colors;
-    final isDarkMode = themeProvider.isDarkMode;
-
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: isDarkMode ? colors.card : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(
-          Icons.dark_mode_outlined,
-          size: 22,
-          color: isDarkMode ? Colors.white : colors.primary,
-        ),
+  final colors = themeProvider.colors;
+  final isDarkMode = themeProvider.isDarkMode;
+  
+  return ListTile(
+    leading: Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: isDarkMode ? colors.card : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(10),
       ),
-      title: Text(
-        'Dark Mode',
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: colors.text,
-        ),
+      child: Icon(
+        Icons.dark_mode_outlined, 
+        size: 22, 
+        color: isDarkMode ? Colors.white : colors.primary,
       ),
-      subtitle: Text(
-        'Switch theme appearance',
-        style: TextStyle(fontSize: 13, color: colors.subtext),
+    ),
+    title: Text(
+      'Dark Mode',
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: colors.text,
       ),
-      trailing: Switch(
-        value: isDarkMode,
-        onChanged: (value) {
-          themeProvider.toggleTheme();
-        },
-        activeColor: colors.primary,
+    ),
+    subtitle: Text(
+      'Switch theme appearance',
+      style: TextStyle(
+        fontSize: 13,
+        color: colors.subtext,
       ),
-    );
-  }
+    ),
+    trailing: Switch(
+      value: isDarkMode,
+      onChanged: (value) {
+        themeProvider.toggleTheme();
+      },
+      activeColor: isDarkMode ? Colors.grey.shade400 : colors.primary,
+      activeTrackColor: isDarkMode ? Colors.grey.shade700 : null,
+      inactiveThumbColor: isDarkMode ? Colors.grey.shade400 : null,
+      inactiveTrackColor: isDarkMode ? Colors.grey.shade800 : null,
+    ),
+  );
+}
 
   void _showFeedbackDialog(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
