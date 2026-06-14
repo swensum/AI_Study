@@ -341,7 +341,7 @@ Widget _buildSwitchMenuItem({
     trailing: Switch(
       value: value,
       onChanged: onChanged,
-      activeColor: isDarkMode ? Colors.grey.shade400 : colors.primary,
+      activeThumbColor: isDarkMode ? Colors.grey.shade400 : colors.primary,
       activeTrackColor: isDarkMode ? Colors.grey.shade700 : null,
       inactiveThumbColor: isDarkMode ? Colors.grey.shade400 : null,
       inactiveTrackColor: isDarkMode ? Colors.grey.shade800 : null,
@@ -386,7 +386,7 @@ Widget _buildSwitchMenuItem({
       onChanged: (value) {
         themeProvider.toggleTheme();
       },
-      activeColor: isDarkMode ? Colors.grey.shade400 : colors.primary,
+      activeThumbColor: isDarkMode ? Colors.grey.shade400 : colors.primary,
       activeTrackColor: isDarkMode ? Colors.grey.shade700 : null,
       inactiveThumbColor: isDarkMode ? Colors.grey.shade400 : null,
       inactiveTrackColor: isDarkMode ? Colors.grey.shade800 : null,

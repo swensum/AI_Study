@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "811574894246",
+    "project_id": "woven-spring-457211-k9",
+    "storage_bucket": "woven-spring-457211-k9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:811574894246:android:a49781cce5d2a804e2de67",
+        "android_client_info": {
+          "package_name": "com.example.study_assistant"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "811574894246-oemmap3vnfq15hgv18loun5q0pl3vdil.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD7LTwdMQ_l-iHVYWNte7EQJlVrW4BT-PM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "811574894246-oemmap3vnfq15hgv18loun5q0pl3vdil.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "811574894246-l51f75ncrumoio21nko0sbmhppf1loo0.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.studyAssistant"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
