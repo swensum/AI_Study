@@ -40,6 +40,8 @@ dependencies:
   flutter_dotenv: ^6.0.1
   firebase_auth: ^6.5.1
   firebase_core: ^4.9.0
+  cloud_firestore: ^6.5.0
+
   
 
 dev_dependencies:

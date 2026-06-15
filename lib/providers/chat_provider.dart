@@ -1,7 +1,7 @@
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
-import 'package:study_assistant/services/ai_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/ai_service.dart';
+import '../services/firestore_service.dart';
 import '../models/chat_message.dart';
 import '../models/chat_session.dart';
 
@@ -11,6 +11,9 @@ class ChatProvider extends ChangeNotifier {
   bool _isLoading = false;
   String _mode = 'chat';
   
+  final FirestoreService _firestoreService = FirestoreService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  
   List<ChatSession> get sessions => _sessions.where((s) => s.messages.isNotEmpty).toList();
   ChatSession? get currentSession => _currentSession;
   List<ChatMessage> get messages => _currentSession?.messages ?? [];
@@ -18,16 +21,42 @@ class ChatProvider extends ChangeNotifier {
   String get mode => _mode;
 
   ChatProvider() {
-    loadSessions();
+    _setupAuthListener();
   }
-  
+
+  void _setupAuthListener() {
+    _auth.authStateChanges().listen((User? user) async {
+      if (user != null) {
+        // User logged in - load from Firestore
+        await loadSessionsFromFirestore();
+      } else {
+        // User logged out - clear local data
+        _sessions = [];
+        createNewSession();
+        notifyListeners();
+      }
+    });
+  }
+
+  // Load sessions from Firestore
+  Future<void> loadSessionsFromFirestore() async {
+    _sessions = await _firestoreService.loadSessions();
+    
+    if (_sessions.isEmpty) {
+      createNewSession();
+    } else {
+      _currentSession = _sessions.first;
+    }
+    
+    notifyListeners();
+  }
+
   void setMode(String mode) {
     _mode = mode;
     notifyListeners();
   }
 
   void createNewSession() {
-    // Create new session but DON'T add to sessions list yet
     final newSession = ChatSession.create();
     _currentSession = newSession;
     notifyListeners();
@@ -45,7 +74,7 @@ class ChatProvider extends ChangeNotifier {
     }
   }
 
-  void deleteSession(String sessionId) {
+  Future<void> deleteSession(String sessionId) async {
     _sessions.removeWhere((s) => s.id == sessionId);
     
     if (_sessions.isEmpty) {
@@ -54,7 +83,9 @@ class ChatProvider extends ChangeNotifier {
       _currentSession = _sessions.first;
     }
     
-    saveSessions();
+    // Delete from Firestore
+    await _firestoreService.deleteSession(sessionId);
+    
     notifyListeners();
   }
 
@@ -65,12 +96,11 @@ class ChatProvider extends ChangeNotifier {
   Future<void> sendMessage(String content) async {
     if (content.trim().isEmpty) return;
 
-    // Check if this is a new empty session that hasn't been added to sessions list yet
+    // Check if this is a new empty session
     final isNewEmptySession = _currentSession != null && 
         _currentSession!.messages.isEmpty && 
         !_sessions.any((s) => s.id == _currentSession!.id);
     
-    // Add to sessions list if it's a new empty session
     if (isNewEmptySession) {
       _sessions.insert(0, _currentSession!);
     }
@@ -86,10 +116,8 @@ class ChatProvider extends ChangeNotifier {
     
     _currentSession?.messages.add(userMessage);
     
-    // Update session title if it's the first message
     if (_currentSession!.messages.length == 1) {
       _currentSession!.updateTitle();
-      // Update the session in the list
       final index = _sessions.indexWhere((s) => s.id == _currentSession!.id);
       if (index != -1) {
         _sessions[index] = _currentSession!;
@@ -101,7 +129,6 @@ class ChatProvider extends ChangeNotifier {
       messages: _currentSession!.messages,
     );
     
-    // Update the session in the list
     final index = _sessions.indexWhere((s) => s.id == _currentSession!.id);
     if (index != -1) {
       _sessions[index] = _currentSession!;
@@ -109,7 +136,9 @@ class ChatProvider extends ChangeNotifier {
     
     _isLoading = true;
     notifyListeners();
-    saveSessions();
+    
+    // Save to Firestore
+    await _firestoreService.saveSession(_currentSession!);
 
     // Get AI response
     String response;
@@ -133,7 +162,6 @@ class ChatProvider extends ChangeNotifier {
       messages: _currentSession!.messages,
     );
     
-    // Update the session in the list again
     final sessionIndex = _sessions.indexWhere((s) => s.id == _currentSession!.id);
     if (sessionIndex != -1) {
       _sessions[sessionIndex] = _currentSession!;
@@ -141,95 +169,30 @@ class ChatProvider extends ChangeNotifier {
     
     _isLoading = false;
     notifyListeners();
-    saveSessions();
+    
+    // Save to Firestore again
+    await _firestoreService.saveSession(_currentSession!);
   }
 
-  void clearChat() {
+  Future<void> clearChat() async {
     if (_currentSession != null && _currentSession!.messages.isNotEmpty) {
-      // Clear all messages
       _currentSession!.messages.clear();
       
-      // Reset the session title to default
       _currentSession = _currentSession!.copyWith(
         title: 'New Chat',
         updatedAt: DateTime.now(),
         messages: [],
       );
       
-      // Update the session in the list
       final index = _sessions.indexWhere((s) => s.id == _currentSession!.id);
       if (index != -1) {
         _sessions[index] = _currentSession!;
       }
       
-      saveSessions();
-      notifyListeners();
-    }
-  }
-
-  Future<void> saveSessions() async {
-    final prefs = await SharedPreferences.getInstance();
-    final sessionsJson = _sessions.map((session) {
-      return {
-        'id': session.id,
-        'title': session.title,
-        'createdAt': session.createdAt.toIso8601String(),
-        'updatedAt': session.updatedAt.toIso8601String(),
-        'messages': session.messages.map((msg) {
-          return {
-            'id': msg.id,
-            'content': msg.content,
-            'isUser': msg.isUser,
-            'isSummary': msg.isSummary,
-            'timestamp': msg.timestamp.toIso8601String(),
-          };
-        }).toList(),
-      };
-    }).toList();
-    
-    await prefs.setString('chat_sessions', jsonEncode(sessionsJson));
-  }
-
-  Future<void> loadSessions() async {
-    final prefs = await SharedPreferences.getInstance();
-    final sessionsJson = prefs.getString('chat_sessions');
-    
-    if (sessionsJson != null) {
-      final List<dynamic> decoded = jsonDecode(sessionsJson);
-      _sessions = decoded.map((sessionData) {
-        final messages = (sessionData['messages'] as List).map((msgData) {
-          return ChatMessage(
-            id: msgData['id'],
-            content: msgData['content'],
-            isUser: msgData['isUser'],
-            isSummary: msgData['isSummary'] ?? false,
-            timestamp: DateTime.parse(msgData['timestamp']),
-          );
-        }).toList();
-        
-        return ChatSession(
-          id: sessionData['id'],
-          title: sessionData['title'],
-          createdAt: DateTime.parse(sessionData['createdAt']),
-          updatedAt: DateTime.parse(sessionData['updatedAt']),
-          messages: messages.toList(),
-        );
-      }).toList();
-      
-      // Sort sessions by updatedAt (most recent first)
-      _sessions.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-      
-      // Set current session to the most recent one
-      if (_sessions.isNotEmpty) {
-        _currentSession = _sessions.first;
-      } else {
-        createNewSession();
-      }
+      // Save to Firestore
+      await _firestoreService.saveSession(_currentSession!);
       
       notifyListeners();
-    } else {
-      // No sessions found, create a default one
-      createNewSession();
     }
   }
 }

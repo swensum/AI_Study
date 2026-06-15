@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:study_assistant/providers/chat_provider.dart';
 import 'package:study_assistant/services/auth_services.dart';
 
 import '../widgets/theme.dart';
@@ -20,16 +22,36 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     _checkIfSignedIn();
+    _handleIncomingLink();
   }
-
-  void _checkIfSignedIn() async {
+ void _checkIfSignedIn() async {
     final auth = AuthService();
-    final user = await auth.user.first;
-    if (user != null) {
+    auth.user.listen((user) {
+      if (user != null && mounted) {
+        _loadAndNavigate();
+      }
+    });
+  }
+   Future<void> _handleIncomingLink() async {
+    // Check if app was opened with a magic link
+    try {
+      final pendingCredential = await FirebaseAuth.instance.getRedirectResult();
+      if (pendingCredential.user != null) {
+        await _loadAndNavigate();
+      }
+    } catch (e) {
+      print('Error handling link: $e');
+    }
+  }
+Future<void> _loadAndNavigate() async {
+    // Load chats from Firestore after successful sign-in
+    final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+    await chatProvider.loadSessionsFromFirestore();
+    
+    if (mounted) {
       Navigator.pushReplacementNamed(context, '/chat');
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
