@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:study_assistant/screens/loginscreen.dart';
 import 'package:study_assistant/screens/profilescreen.dart';
-import 'package:study_assistant/services/auth_services.dart';
+
 import '../providers/chat_provider.dart';
 import '../models/chat_session.dart';
 
@@ -29,9 +29,8 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
     _checkUser();
   }
 
-  void _checkUser() async {
-    final auth = AuthService();
-    auth.user.listen((user) {
+  void _checkUser() {
+    FirebaseAuth.instance.authStateChanges().listen((user) {
       setState(() {
         _currentUser = user;
       });

@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
-import 'package:study_assistant/providers/chat_provider.dart';
-import 'package:study_assistant/screens/chat_screen.dart';
-import 'package:study_assistant/services/auth_services.dart';
-import 'package:study_assistant/widgets/theme.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:study_assistant/services/auth_services.dart';
 
+import 'providers/chat_provider.dart';
+import 'widgets/theme.dart';
+import 'screens/chat_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await Firebase.initializeApp();
+  await dotenv.load(fileName: ".env");
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -19,14 +21,18 @@ void main() async {
       statusBarIconBrightness: Brightness.light,
     ),
   );
-  await dotenv.load(fileName: ".env");
-  
+
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -42,10 +48,10 @@ class MyApp extends StatelessWidget {
             debugShowCheckedModeBanner: false,
             theme: themeProvider.lightTheme,
             darkTheme: themeProvider.darkTheme,
-            themeMode: themeProvider.isDarkMode 
-                ? ThemeMode.dark 
+            themeMode: themeProvider.isDarkMode
+                ? ThemeMode.dark
                 : ThemeMode.light,
-            home: const ChatScreen(), // Always show chat screen first
+            home: const ChatScreen(),
           );
         },
       ),

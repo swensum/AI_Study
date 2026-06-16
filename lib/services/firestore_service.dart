@@ -63,10 +63,7 @@ class FirestoreService {
       List<ChatSession> sessions = [];
 
       for (final QueryDocumentSnapshot<Map<String, dynamic>> chatDoc in chatsSnapshot.docs) {
-        final Map<String, dynamic>? chatData = chatDoc.data();
-        
-        // Skip if chat data is null
-        if (chatData == null) continue;
+        final Map<String, dynamic> chatData = chatDoc.data();
         
         // Get messages for this chat
         final QuerySnapshot<Map<String, dynamic>> messagesSnapshot = await _getMessagesCollection(chatDoc.id)
@@ -76,10 +73,7 @@ class FirestoreService {
         List<ChatMessage> messages = [];
 
         for (final QueryDocumentSnapshot<Map<String, dynamic>> msgDoc in messagesSnapshot.docs) {
-          final Map<String, dynamic>? msgData = msgDoc.data();
-          
-          // Skip if message data is null
-          if (msgData == null) continue;
+          final Map<String, dynamic> msgData = msgDoc.data();
           
           messages.add(ChatMessage(
             id: msgDoc.id,
@@ -187,9 +181,7 @@ class FirestoreService {
           List<ChatSession> sessions = [];
           
           for (final QueryDocumentSnapshot<Map<String, dynamic>> chatDoc in querySnapshot.docs) {
-            final Map<String, dynamic>? chatData = chatDoc.data();
-            
-            if (chatData == null) continue;
+            final Map<String, dynamic> chatData = chatDoc.data();
             
             final QuerySnapshot<Map<String, dynamic>> messagesSnapshot = await _getMessagesCollection(chatDoc.id)
                 .orderBy('timestamp')
@@ -198,9 +190,7 @@ class FirestoreService {
             List<ChatMessage> messages = [];
             
             for (final QueryDocumentSnapshot<Map<String, dynamic>> msgDoc in messagesSnapshot.docs) {
-              final Map<String, dynamic>? msgData = msgDoc.data();
-              
-              if (msgData == null) continue;
+              final Map<String, dynamic> msgData = msgDoc.data();
               
               messages.add(ChatMessage(
                 id: msgDoc.id,

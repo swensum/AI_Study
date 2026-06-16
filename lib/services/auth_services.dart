@@ -1,77 +1,95 @@
+// lib/services/auth_service.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-
-  // Send magic link to email
-  Future<void> sendSignInLink(String email) async {
-    final ActionCodeSettings actionCodeSettings = ActionCodeSettings(
-      url: 'https://woven-spring-457211-k9.firebaseapp.com/__/auth/action',
-      handleCodeInApp: true,
-      iOSBundleId: 'com.example.studyAssistant',
-      androidPackageName: 'com.example.study_assistant',
-      androidInstallApp: true,
-      androidMinimumVersion: '12',
-    );
-
-    await _auth.sendSignInLinkToEmail(
-      email: email,
-      actionCodeSettings: actionCodeSettings,
-    );
-    
-    // Save the email for later use when signing in
-    await _saveEmail(email);
-  }
-
-  // Save email to local storage
-  Future<void> _saveEmail(String email) async {
+  static final FirebaseAuth _auth = FirebaseAuth.instance;
+  
+  // Save email locally before sending the link
+  static Future<void> saveEmailLocally(String email) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('email_for_signin', email);
+    await prefs.setString('pending_email', email);
   }
-
-  // Get saved email
-  Future<String?> getSavedEmail() async {
+  
+  // Get stored email
+  static Future<String?> getStoredEmail() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('email_for_signin');
+    return prefs.getString('pending_email');
   }
-
-  // Sign in with magic link
-  Future<User?> signInWithLink(String link) async {
+  
+  // Clear stored email after sign-in
+  static Future<void> clearStoredEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('pending_email');
+  }
+  
+  // Send sign-in link to email
+  static Future<bool> sendSignInLink(String email) async {
     try {
-      // Get the saved email
-      final email = await getSavedEmail();
+      // Save email before sending
+      await saveEmailLocally(email);
       
-      if (email == null) {
-        print('No email found. Please request a new magic link.');
-        return null;
-      }
-      
-      // Sign in with email and link
-      UserCredential result = await _auth.signInWithEmailLink(
-        email: email,
-        emailLink: link,
+      ActionCodeSettings actionCodeSettings = ActionCodeSettings(
+        // Replace with your actual domain (must be whitelisted in Firebase Console)
+        url: 'https://woven-spring-457211-k9.firebaseapp.com/finishSignIn',
+        handleCodeInApp: true,
+        // For Android - replace with your package name
+        androidPackageName: 'com.example.study_assistant',
+        androidInstallApp: true,
+        androidMinimumVersion: '12',
+        // For iOS - replace with your bundle ID
+        iOSBundleId: 'com.example.studyAssistant',
       );
       
-      // Clear the saved email after successful sign in
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('email_for_signin');
+      await _auth.sendSignInLinkToEmail(
+        email: email,
+        actionCodeSettings: actionCodeSettings,
+      );
       
-      return result.user;
+      return true;
     } catch (e) {
-      print('Error signing in: $e');
+      print('Error sending sign-in link: $e');
+      return false;
+    }
+  }
+  
+  // Complete sign-in with email link
+  static Future<UserCredential?> signInWithEmailLink(
+    String email,
+    String link,
+  ) async {
+    try {
+      // Verify it's a sign-in with email link
+      if (_auth.isSignInWithEmailLink(link)) {
+        UserCredential userCredential = await _auth.signInWithEmailLink(
+          email: email,
+          emailLink: link,
+        );
+        
+        // Clear stored email after successful sign-in
+        await clearStoredEmail();
+        
+        return userCredential;
+      }
+      return null;
+    } catch (e) {
+      print('Error signing in with email link: $e');
       return null;
     }
   }
-
-  // Sign out
-  Future<void> signOut() async {
-    await _auth.signOut();
-  }
-
+  
   // Check if user is signed in
-  Stream<User?> get user => _auth.authStateChanges();
+  static bool isSignedIn() {
+    return _auth.currentUser != null;
+  }
   
   // Get current user
-  User? get currentUser => _auth.currentUser;
+  static User? getCurrentUser() {
+    return _auth.currentUser;
+  }
+  
+  // Sign out
+  static Future<void> signOut() async {
+    await _auth.signOut();
+  }
 }
