@@ -27,7 +27,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data
                     android:scheme="https"
-                    android:host="woven-spring-457211-k9.firebaseapp.com"
+                     android:host="woven-spring-457211-k9.web.app"
                      android:pathPrefix="/finishSignIn" />
             </intent-filter>
         </activity>

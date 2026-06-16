@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:study_assistant/services/auth_services.dart';
+import 'package:study_assistant/services/link_handler.dart';
 
 import 'providers/chat_provider.dart';
 import 'widgets/theme.dart';
@@ -31,8 +32,14 @@ class MyApp extends StatefulWidget {
   @override
   State<MyApp> createState() => _MyAppState();
 }
-
 class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+
+    final uri = Uri.base.toString();
+    LinkHandler.handleLink(context, uri);
+  }
   @override
   Widget build(BuildContext context) {
     return MultiProvider(

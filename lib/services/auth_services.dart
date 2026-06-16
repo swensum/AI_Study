@@ -31,7 +31,7 @@ class AuthService {
       
       ActionCodeSettings actionCodeSettings = ActionCodeSettings(
         // Replace with your actual domain (must be whitelisted in Firebase Console)
-        url: 'https://woven-spring-457211-k9.firebaseapp.com/finishSignIn',
+        url:'https://woven-spring-457211-k9.web.app/finishSignIn',
         handleCodeInApp: true,
         // For Android - replace with your package name
         androidPackageName: 'com.example.study_assistant',
