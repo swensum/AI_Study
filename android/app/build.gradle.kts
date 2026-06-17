@@ -27,7 +27,8 @@ android {
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
- if (keystorePropertiesFile.exists()) {
+
+    if (keystorePropertiesFile.exists()) {
         signingConfigs {
             create("release") {
                 keyAlias = keystoreProperties.getProperty("keyAlias") ?: ""
