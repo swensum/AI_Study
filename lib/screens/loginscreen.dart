@@ -1,8 +1,8 @@
 // lib/screens/login_screen.dart
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:study_assistant/providers/chat_provider.dart';
-
 import 'package:study_assistant/services/auth_services.dart';
 import '../widgets/theme.dart';
 
@@ -17,8 +17,11 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   bool _isLoading = false;
   bool _linkSent = false;
+  bool _isGoogleLoading = false;
+  
+  // Create an instance of AuthService
+  final AuthService _authService = AuthService();
 
-  // Check for email link when app opens
   @override
   void initState() {
     super.initState();
@@ -27,16 +30,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _checkForEmailLink() async {
     try {
-      // Get the link from the current page (if the app was opened via a link)
       final String? link = await _getEmailLink();
       
       if (link != null) {
-        // Try to sign in
         final email = await AuthService.getStoredEmail();
         if (email != null && email.isNotEmpty) {
           final userCredential = await AuthService.signInWithEmailLink(email, link);
           if (userCredential != null) {
-            // Sign-in successful - navigate to chat
             _showSnackBar('Successfully signed in!', isSuccess: true);
             await _loadAndNavigate();
           }
@@ -47,17 +47,8 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // This is a placeholder - your actual implementation will depend on how you handle deep links
   Future<String?> _getEmailLink() async {
-    // In a real app, this would get the link from:
-    // - Android: intent data
-    // - iOS: openURL
-    // - Web: URL parameters
-    
-    // For testing, you can manually set a link here
-    // return 'https://your-domain.com/finishSignIn?link=...';
-    
-    return null; // Return null for now
+    return null; 
   }
 
   Future<void> _sendMagicLink() async {
@@ -99,6 +90,28 @@ class _LoginScreenState extends State<LoginScreen> {
         _isLoading = false;
       });
       _showSnackBar('Error: $e');
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    if (_isGoogleLoading) return;
+    
+    setState(() => _isGoogleLoading = true);
+    
+    try {
+      // Use the instance method
+      User? user = await _authService.signInWithGoogle(context);
+      
+      if (user != null && mounted) {
+        // Navigate to chat screen
+        await _loadAndNavigate();
+      }
+    } catch (e) {
+      // Error is already handled in AuthService
+      // Just log it if needed
+      print('Google Sign-In error: $e');
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
     }
   }
 
@@ -164,7 +177,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   style: TextStyle(color: colors.text),
-                  enabled: !_linkSent, // Disable input when link is sent
+                  enabled: !_linkSent,
                   decoration: InputDecoration(
                     labelText: 'Email Address',
                     labelStyle: TextStyle(color: colors.subtext),
@@ -185,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
                 
-                // Send Button
+                // Send Magic Link Button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -217,6 +230,82 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 
+                // Divider with OR text
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Divider(
+                          color: colors.border,
+                          thickness: 1,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'OR',
+                          style: TextStyle(
+                            color: colors.subtext,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Divider(
+                          color: colors.border,
+                          thickness: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Google Sign-In Button
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _isGoogleLoading ? null : _signInWithGoogle,
+                    icon: _isGoogleLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.g_mobiledata,
+                            size: 28,
+                          ),
+                    label: _isGoogleLoading
+                        ? Text(
+                            'Signing in...',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: colors.text,
+                            ),
+                          )
+                        : Text(
+                            'Sign in with Google',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: colors.text,
+                            ),
+                          ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: colors.text,
+                      side: BorderSide(color: colors.border, width: 1.5),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+                
                 // Resend timer or status message
                 if (_linkSent) ...[
                   const SizedBox(height: 16),
@@ -243,38 +332,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ],
-                
-                const SizedBox(height: 24),
-                
-                // Info Text
-                Text(
-                  _linkSent 
-                    ? "Didn't receive the email? Check spam folder or try again." 
-                    : "We'll send you a magic link to sign in instantly.\nNo password needed!",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colors.subtext,
-                  ),
-                ),
-                
-                // Test button (for development only)
-                if (!_linkSent) ...[
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: () {
-                      // For testing: Auto-fill a test email
-                      _emailController.text = 'test@example.com';
-                    },
-                    child: Text(
-                      'Fill test email',
-                      style: TextStyle(
-                        color: colors.subtext,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
@@ -284,7 +341,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _resendLink() async {
-    // If we have a previous email, resend to it
     final email = _emailController.text.trim();
     if (email.isNotEmpty) {
       setState(() {

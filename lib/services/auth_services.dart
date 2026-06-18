@@ -1,10 +1,14 @@
 // lib/services/auth_service.dart
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
-  
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+
   // Save email locally before sending the link
   static Future<void> saveEmailLocally(String email) async {
     final prefs = await SharedPreferences.getInstance();
@@ -92,4 +96,68 @@ class AuthService {
   static Future<void> signOut() async {
     await _auth.signOut();
   }
+
+
+
+//--------------------googlesignin--------------------------
+
+  Future<User?> signInWithGoogle(BuildContext context) async {
+    try {
+      // Sign out from previous Google account
+      await _googleSignIn.signOut();
+      
+      // Start Google Sign In
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      
+      if (googleUser == null) {
+        throw Exception('Google sign-in cancelled by user');
+      }
+      
+      // Get authentication details
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      
+      // Create Firebase credential
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      
+      // Sign in to Firebase
+      final UserCredential userCredential = await _auth.signInWithCredential(credential);
+      final User? user = userCredential.user;
+      
+      if (user != null) {
+        print("✅ Google sign-in success: ${user.email}");
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Google Sign In Successful!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        
+        return user;
+      } else {
+        throw Exception('Firebase sign-in failed');
+      }
+    } catch (e) {
+      print("❌ Google Sign-in Error: $e");
+      
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Google Sign-in failed: ${e.toString().replaceAll('Exception: ', '')}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+      
+      return null;
+    }
+  }
+
 }
