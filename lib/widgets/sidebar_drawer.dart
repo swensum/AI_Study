@@ -199,7 +199,7 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
   }
 
   void _showDeleteDialog(BuildContext context, String sessionId, ChatProvider chatProvider) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final colors = themeProvider.colors;
     final isDarkMode = themeProvider.isDarkMode;
     
@@ -361,9 +361,9 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
     );
   }
 
-  // New method to build profile avatar with user photo
+  // Fixed: Added listen: false
   Widget _buildProfileAvatar() {
-    final themeProvider = Provider.of<ThemeProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final colors = themeProvider.colors;
     
     // Check if user has a photo URL
@@ -671,98 +671,96 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
     );
   }
 
-  // Login button at the bottom like ChatGPT
-  // Login button at the bottom like ChatGPT
-Widget _buildLoginFooter() {
-  final themeProvider = Provider.of<ThemeProvider>(context);
-  final colors = themeProvider.colors;
-  final isDarkMode = themeProvider.isDarkMode;
-  
-  return Padding(
-    padding: const EdgeInsets.all(16),
-    child: Column(
-      children: [
-        InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () async {
-            // Navigate to login screen and wait for result
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const LoginScreen()),
-            );
-            
-            // If user logged in successfully, update state
-            if (result == true) {
-              setState(() {
-                _currentUser = FirebaseAuth.instance.currentUser;
-              });
-            }
-          },
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              gradient: isDarkMode
-                  ? null
-                  : LinearGradient(
-                      colors: [
-                        colors.primary,
-                        colors.primary.withOpacity(0.8),
-                      ],
-                    ),
-              color: isDarkMode ? Colors.grey.shade800 : null,
-              borderRadius: BorderRadius.circular(12),
-              border: isDarkMode 
-                  ? Border.all(color: Colors.grey.shade700, width: 1)
-                  : null,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.login_outlined,
-                  size: 18,
-                  color: Colors.white,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Log in',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+  Widget _buildLoginFooter() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
+    final isDarkMode = themeProvider.isDarkMode;
+    
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () async {
+              // Navigate to login screen and wait for result
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+              );
+              
+              // If user logged in successfully, update state
+              if (result == true) {
+                setState(() {
+                  _currentUser = FirebaseAuth.instance.currentUser;
+                });
+              }
+            },
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                gradient: isDarkMode
+                    ? null
+                    : LinearGradient(
+                        colors: [
+                          colors.primary,
+                          colors.primary.withOpacity(0.8),
+                        ],
+                      ),
+                color: isDarkMode ? Colors.grey.shade800 : null,
+                borderRadius: BorderRadius.circular(12),
+                border: isDarkMode 
+                    ? Border.all(color: Colors.grey.shade700, width: 1)
+                    : null,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.login_outlined,
+                    size: 18,
                     color: Colors.white,
                   ),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'or Sign up',  // ✅ KEPT THIS!
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.white.withOpacity(0.8),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Log in',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.auto_awesome, size: 14, color: colors.primary.withOpacity(0.7)),
-            const SizedBox(width: 6),
-            Text(
-              'Save your conversations',
-              style: TextStyle(
-                fontSize: 11,
-                color: colors.subtext,
+                  const SizedBox(width: 4),
+                  Text(
+                    'or Sign up',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white.withOpacity(0.8),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.auto_awesome, size: 14, color: colors.primary.withOpacity(0.7)),
+              const SizedBox(width: 6),
+              Text(
+                'Save your conversations',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: colors.subtext,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }

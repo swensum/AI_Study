@@ -26,28 +26,25 @@ class ChatProvider extends ChangeNotifier {
 
   void _setupAuthListener() {
     _auth.authStateChanges().listen((User? user) async {
+      
+      
       if (user != null) {
-        // User logged in - load from Firestore
+         
         await loadSessionsFromFirestore();
+        createNewSession();
+        notifyListeners();
       } else {
-        // User logged out - clear local data
+        
         _sessions = [];
         createNewSession();
         notifyListeners();
       }
     });
   }
-
+ 
   // Load sessions from Firestore
   Future<void> loadSessionsFromFirestore() async {
-    _sessions = await _firestoreService.loadSessions();
-    
-    if (_sessions.isEmpty) {
-      createNewSession();
-    } else {
-      _currentSession = _sessions.first;
-    }
-    
+    _sessions = await _firestoreService.loadSessions(); 
     notifyListeners();
   }
 
@@ -80,7 +77,7 @@ class ChatProvider extends ChangeNotifier {
     if (_sessions.isEmpty) {
       createNewSession();
     } else if (_currentSession?.id == sessionId) {
-      _currentSession = _sessions.first;
+       createNewSession();
     }
     
     // Delete from Firestore
@@ -195,4 +192,9 @@ class ChatProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+   Future<void> refreshSessions() async {
+    _sessions = await _firestoreService.loadSessions();
+    notifyListeners();
+  }
+
 }

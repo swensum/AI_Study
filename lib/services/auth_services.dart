@@ -97,6 +97,18 @@ class AuthService {
     await _auth.signOut();
   }
 
+static void debugAuthState() {
+  final user = _auth.currentUser;
+  if (user != null) {
+    print('🔐 User is authenticated:');
+    print('  UID: ${user.uid}');
+    print('  Email: ${user.email}');
+    print('  Display Name: ${user.displayName}');
+    print('  Photo URL: ${user.photoURL}');
+  } else {
+    print('❌ No user is signed in');
+  }
+}
 
 
 //--------------------googlesignin--------------------------
@@ -128,7 +140,7 @@ class AuthService {
       
       if (user != null) {
         print("✅ Google sign-in success: ${user.email}");
-        
+        AuthService.debugAuthState();
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
