@@ -114,15 +114,15 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) setState(() => _isGoogleLoading = false);
     }
   }
-
-  Future<void> _loadAndNavigate() async {
-    final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-    await chatProvider.loadSessionsFromFirestore();
-    
-    if (mounted) {
-      Navigator.pushReplacementNamed(context, '/chat');
-    }
+// In LoginScreen, after successful sign in:
+Future<void> _loadAndNavigate() async {
+  final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+  await chatProvider.loadSessionsFromFirestore();
+  
+  if (mounted) {
+    Navigator.pop(context, true); 
   }
+}
 
   @override
   Widget build(BuildContext context) {

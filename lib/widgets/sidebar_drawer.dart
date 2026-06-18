@@ -22,6 +22,7 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   User? _currentUser;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -30,10 +31,14 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
   }
 
   void _checkUser() {
+    // Listen to auth state changes
     FirebaseAuth.instance.authStateChanges().listen((user) {
-      setState(() {
-        _currentUser = user;
-      });
+      if (mounted) {
+        setState(() {
+          _currentUser = user;
+          _isLoading = false;
+        });
+      }
     });
   }
 
@@ -54,83 +59,85 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
       width: MediaQuery.of(context).size.width,
       backgroundColor: colors.surface,
       child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // HEADER with conditional search and profile icons
-            _buildHeader(),
-            const SizedBox(height: 26),
-            
-            // New Chat Button
-            _buildNewChatButton(context),
-            
-            const SizedBox(height: 16),
-            
-            // Search Bar (visible when searching and logged in)
-            if (_isSearching && _currentUser != null)
-              _buildSearchBar(),
-            
-            _buildSectionTitle('Recents'),
-            
-            Expanded(
-              child: _currentUser != null
-                  ? Consumer<ChatProvider>(
-                      builder: (context, chatProvider, child) {
-                        final filteredSessions = _searchQuery.isEmpty
-                            ? chatProvider.sessions
-                            : chatProvider.sessions.where((session) =>
-                                session.title
-                                    .toLowerCase()
-                                    .contains(_searchQuery.toLowerCase())).toList();
-                        
-                        if (filteredSessions.isEmpty) {
-                          return _buildEmptyHistory(_searchQuery.isNotEmpty);
-                        }
-                        
-                        return ListView.builder(
-                          itemCount: filteredSessions.length,
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          itemBuilder: (context, index) {
-                            final session = filteredSessions[index];
-                            final isActive = chatProvider.currentSession?.id == session.id;
-                            
-                            return _buildSessionItem(
-                              context: context,
-                              session: session,
-                              isActive: isActive,
-                              searchQuery: _searchQuery,
-                              onTap: () {
-                                setState(() {
-                                  _isSearching = false;
-                                  _searchQuery = '';
-                                  _searchController.clear();
-                                  _searchFocusNode.unfocus();
-                                });
-                                chatProvider.switchSession(session.id);
-                                Navigator.pop(context);
-                              },
-                              onLongPress: () {
-                                _showDeleteDialog(context, session.id, chatProvider);
-                              },
-                            );
-                          },
-                        );
-                      },
-                    )
-                  : _buildEmptyHistory(false),
-            ),
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // HEADER with conditional search and profile icons
+                  _buildHeader(),
+                  const SizedBox(height: 26),
+                  
+                  // New Chat Button
+                  _buildNewChatButton(context),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Search Bar (visible when searching and logged in)
+                  if (_isSearching && _currentUser != null)
+                    _buildSearchBar(),
+                  
+                  _buildSectionTitle('Recents'),
+                  
+                  Expanded(
+                    child: _currentUser != null
+                        ? Consumer<ChatProvider>(
+                            builder: (context, chatProvider, child) {
+                              final filteredSessions = _searchQuery.isEmpty
+                                  ? chatProvider.sessions
+                                  : chatProvider.sessions.where((session) =>
+                                      session.title
+                                          .toLowerCase()
+                                          .contains(_searchQuery.toLowerCase())).toList();
+                              
+                              if (filteredSessions.isEmpty) {
+                                return _buildEmptyHistory(_searchQuery.isNotEmpty);
+                              }
+                              
+                              return ListView.builder(
+                                itemCount: filteredSessions.length,
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                itemBuilder: (context, index) {
+                                  final session = filteredSessions[index];
+                                  final isActive = chatProvider.currentSession?.id == session.id;
+                                  
+                                  return _buildSessionItem(
+                                    context: context,
+                                    session: session,
+                                    isActive: isActive,
+                                    searchQuery: _searchQuery,
+                                    onTap: () {
+                                      setState(() {
+                                        _isSearching = false;
+                                        _searchQuery = '';
+                                        _searchController.clear();
+                                        _searchFocusNode.unfocus();
+                                      });
+                                      chatProvider.switchSession(session.id);
+                                      Navigator.pop(context);
+                                    },
+                                    onLongPress: () {
+                                      _showDeleteDialog(context, session.id, chatProvider);
+                                    },
+                                  );
+                                },
+                              );
+                            },
+                          )
+                        : _buildEmptyHistory(false),
+                  ),
 
-            const Spacer(),
+                  const Spacer(),
 
-            Divider(
-              height: 1,
-              color: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade400,
-            ),
-            
-            // Footer - shows login button when not logged in
-            _currentUser != null ? _buildFooter() : _buildLoginFooter(),
-          ],
-        ),
+                  Divider(
+                    height: 1,
+                    color: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade400,
+                  ),
+                  
+                  // Footer - shows login button when not logged in
+                  _currentUser != null ? _buildFooter() : _buildLoginFooter(),
+                ],
+              ),
       ),
     );
   }
@@ -323,19 +330,27 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
 
                   InkWell(
                     borderRadius: BorderRadius.circular(20),
-                    onTap: () {
-                      Navigator.push(
+                    onTap: () async {
+                      // Navigate to profile screen and wait for result
+                      final result = await Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => const ProfileScreen()),
                       );
+                      
+                      // If user signed out, close the drawer and update state
+                      if (result == true) {
+                        setState(() {
+                          _currentUser = FirebaseAuth.instance.currentUser;
+                        });
+                        // Close drawer if user signed out
+                        if (_currentUser == null) {
+                          Navigator.pop(context);
+                        }
+                      }
                     },
                     child: Padding(
                       padding: const EdgeInsets.all(6),
-                      child: Icon(
-                        Icons.person_outline,
-                        size: 22,
-                        color: isDarkMode ? Colors.white : colors.primary,
-                      ),
+                      child: _buildProfileAvatar(),
                     ),
                   ),
                 ],
@@ -344,6 +359,42 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
         ],
       ),
     );
+  }
+
+  // New method to build profile avatar with user photo
+  Widget _buildProfileAvatar() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
+    
+    // Check if user has a photo URL
+    final photoUrl = _currentUser?.photoURL;
+    
+    if (photoUrl != null && photoUrl.isNotEmpty) {
+      // Show user's profile photo
+      return ClipOval(
+        child: Image.network(
+          photoUrl,
+          width: 22,
+          height: 22,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            // Fallback to default icon if image fails to load
+            return Icon(
+              Icons.person_outline,
+              size: 22,
+              color: colors.primary,
+            );
+          },
+        ),
+      );
+    } else {
+      // Show default person icon
+      return Icon(
+        Icons.person_outline,
+        size: 22,
+        color: colors.primary,
+      );
+    }
   }
 
   Widget _buildNewChatButton(BuildContext context) {
@@ -621,80 +672,97 @@ class _SidebarDrawerState extends State<SidebarDrawer> {
   }
 
   // Login button at the bottom like ChatGPT
-  Widget _buildLoginFooter() {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final colors = themeProvider.colors;
-    final isDarkMode = themeProvider.isDarkMode;
-    
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-              );
-            },
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: isDarkMode ? colors.card : Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDarkMode ? colors.border : Colors.grey.shade300,
+  // Login button at the bottom like ChatGPT
+Widget _buildLoginFooter() {
+  final themeProvider = Provider.of<ThemeProvider>(context);
+  final colors = themeProvider.colors;
+  final isDarkMode = themeProvider.isDarkMode;
+  
+  return Padding(
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      children: [
+        InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () async {
+            // Navigate to login screen and wait for result
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
+            );
+            
+            // If user logged in successfully, update state
+            if (result == true) {
+              setState(() {
+                _currentUser = FirebaseAuth.instance.currentUser;
+              });
+            }
+          },
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              gradient: isDarkMode
+                  ? null
+                  : LinearGradient(
+                      colors: [
+                        colors.primary,
+                        colors.primary.withOpacity(0.8),
+                      ],
+                    ),
+              color: isDarkMode ? Colors.grey.shade800 : null,
+              borderRadius: BorderRadius.circular(12),
+              border: isDarkMode 
+                  ? Border.all(color: Colors.grey.shade700, width: 1)
+                  : null,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.login_outlined,
+                  size: 18,
+                  color: Colors.white,
                 ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.login_outlined,
-                    size: 18,
-                    color: colors.primary,
+                const SizedBox(width: 8),
+                Text(
+                  'Log in',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Log in',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: colors.primary,
-                    ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'or Sign up',  // ✅ KEPT THIS!
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.white.withOpacity(0.8),
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'or Sign up',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: colors.subtext,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.auto_awesome, size: 14, color: colors.primary.withOpacity(0.7)),
-              const SizedBox(width: 6),
-              Text(
-                'Save your conversations',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: colors.subtext,
-                ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.auto_awesome, size: 14, color: colors.primary.withOpacity(0.7)),
+            const SizedBox(width: 6),
+            Text(
+              'Save your conversations',
+              style: TextStyle(
+                fontSize: 11,
+                color: colors.subtext,
               ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
 }

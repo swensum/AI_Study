@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:study_assistant/services/auth_services.dart';
 import 'package:study_assistant/widgets/theme.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -11,6 +13,10 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _notificationsEnabled = true;
+  bool _isSigningOut = false;
+
+  // Get current user
+  User? get _currentUser => FirebaseAuth.instance.currentUser;
 
   @override
   Widget build(BuildContext context) {
@@ -106,44 +112,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),
-                onTap: () {
-                  _showSignOutDialog(context);
-                },
+                onTap: _isSigningOut ? null : _signOut,
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
                     color: isDarkMode
-                        ? colors
-                              .card // Use card color (grey) in dark mode
+                        ? colors.card
                         : Colors.red.shade50,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isDarkMode
-                          ? colors
-                                .border // Use border color in dark mode
+                          ? colors.border
                           : Colors.red.shade200,
                     ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.logout,
-                        size: 20,
-                        color: isDarkMode ? colors.text : Colors.red.shade600,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Sign Out',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: isDarkMode ? colors.text : Colors.red.shade600,
+                  child: _isSigningOut
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.logout,
+                              size: 20,
+                              color: isDarkMode ? colors.text : Colors.red.shade600,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Sign Out',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: isDarkMode ? colors.text : Colors.red.shade600,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
                 ),
               ),
             ),
@@ -159,6 +169,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final colors = themeProvider.colors;
     final isDarkMode = themeProvider.isDarkMode;
+
+    // Get user info
+    final user = _currentUser;
+    final displayName = user?.displayName ?? 'User';
+    final email = user?.email ?? 'No email';
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -184,20 +199,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: CircleAvatar(
               radius: 50,
               backgroundColor: Colors.transparent,
-              child: Icon(Icons.person, size: 50, color: Colors.white),
+              child: user?.photoURL != null
+                  ? ClipOval(
+                      child: Image.network(
+                        user!.photoURL!,
+                        width: 100,
+                        height: 100,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Icon(Icons.person, size: 50, color: Colors.white);
+                        },
+                      ),
+                    )
+                  : Icon(Icons.person, size: 50, color: Colors.white),
             ),
           ),
           const SizedBox(height: 16),
 
           // Name
           Text(
-            'Alex Johnson',
+            displayName,
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: colors.text,
             ),
           ),
+
+          // Email
+          if (email != 'No email') ...[
+            const SizedBox(height: 4),
+            Text(
+              email,
+              style: TextStyle(
+                fontSize: 14,
+                color: colors.subtext,
+              ),
+            ),
+          ],
 
           const SizedBox(height: 12),
 
@@ -214,28 +253,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             child: InkWell(
-  borderRadius: BorderRadius.circular(20),
-  onTap: () {},
-  child: Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Icon(
-        Icons.edit, 
-        size: 16, 
-        color: isDarkMode ? Colors.white : colors.primary,
-      ),
-      const SizedBox(width: 6),
-      Text(
-        'Edit Profile',
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: isDarkMode ? Colors.white : colors.primary,
-        ),
-      ),
-    ],
-  ),
-),
+              borderRadius: BorderRadius.circular(20),
+              onTap: () {},
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.edit, 
+                    size: 16, 
+                    color: isDarkMode ? Colors.white : colors.primary,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Edit Profile',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isDarkMode ? Colors.white : colors.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -302,97 +341,170 @@ class _ProfileScreenState extends State<ProfileScreen> {
       onTap: onTap,
     );
   }
-Widget _buildSwitchMenuItem({
-  required IconData icon,
-  required String title,
-  required String subtitle,
-  required bool value,
-  required Function(bool) onChanged,
-}) {
-  final themeProvider = Provider.of<ThemeProvider>(context);
-  final colors = themeProvider.colors;
-  final isDarkMode = themeProvider.isDarkMode;
 
-  return ListTile(
-    leading: Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: isDarkMode ? colors.card : Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(10),
+  Widget _buildSwitchMenuItem({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required Function(bool) onChanged,
+  }) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
+    final isDarkMode = themeProvider.isDarkMode;
+
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isDarkMode ? colors.card : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          icon,
+          size: 22,
+          color: isDarkMode ? Colors.white : colors.primary,
+        ),
       ),
-      child: Icon(
-        icon,
-        size: 22,
-        color: isDarkMode ? Colors.white : colors.primary,
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: colors.text,
+        ),
       ),
-    ),
-    title: Text(
-      title,
-      style: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: colors.text,
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(fontSize: 13, color: colors.subtext),
       ),
-    ),
-    subtitle: Text(
-      subtitle,
-      style: TextStyle(fontSize: 13, color: colors.subtext),
-    ),
-    trailing: Switch(
-      value: value,
-      onChanged: onChanged,
-      activeThumbColor: isDarkMode ? Colors.grey.shade400 : colors.primary,
-      activeTrackColor: isDarkMode ? Colors.grey.shade700 : null,
-      inactiveThumbColor: isDarkMode ? Colors.grey.shade400 : null,
-      inactiveTrackColor: isDarkMode ? Colors.grey.shade800 : null,
-    ),
-  );
-}
+      trailing: Switch(
+        value: value,
+        onChanged: onChanged,
+        activeThumbColor: isDarkMode ? Colors.grey.shade400 : colors.primary,
+        activeTrackColor: isDarkMode ? Colors.grey.shade700 : null,
+        inactiveThumbColor: isDarkMode ? Colors.grey.shade400 : null,
+        inactiveTrackColor: isDarkMode ? Colors.grey.shade800 : null,
+      ),
+    );
+  }
 
   Widget _buildDarkModeSwitch(ThemeProvider themeProvider) {
-  final colors = themeProvider.colors;
-  final isDarkMode = themeProvider.isDarkMode;
-  
-  return ListTile(
-    leading: Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: isDarkMode ? colors.card : Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(10),
+    final colors = themeProvider.colors;
+    final isDarkMode = themeProvider.isDarkMode;
+    
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isDarkMode ? colors.card : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          Icons.dark_mode_outlined, 
+          size: 22, 
+          color: isDarkMode ? Colors.white : colors.primary,
+        ),
       ),
-      child: Icon(
-        Icons.dark_mode_outlined, 
-        size: 22, 
-        color: isDarkMode ? Colors.white : colors.primary,
+      title: Text(
+        'Dark Mode',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: colors.text,
+        ),
       ),
-    ),
-    title: Text(
-      'Dark Mode',
-      style: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: colors.text,
+      subtitle: Text(
+        'Switch theme appearance',
+        style: TextStyle(
+          fontSize: 13,
+          color: colors.subtext,
+        ),
       ),
-    ),
-    subtitle: Text(
-      'Switch theme appearance',
-      style: TextStyle(
-        fontSize: 13,
-        color: colors.subtext,
+      trailing: Switch(
+        value: isDarkMode,
+        onChanged: (value) {
+          themeProvider.toggleTheme();
+        },
+        activeThumbColor: isDarkMode ? Colors.grey.shade400 : colors.primary,
+        activeTrackColor: isDarkMode ? Colors.grey.shade700 : null,
+        inactiveThumbColor: isDarkMode ? Colors.grey.shade400 : null,
+        inactiveTrackColor: isDarkMode ? Colors.grey.shade800 : null,
       ),
-    ),
-    trailing: Switch(
-      value: isDarkMode,
-      onChanged: (value) {
-        themeProvider.toggleTheme();
+    );
+  }
+
+  // ==================== SIGN OUT METHOD ====================
+  Future<void> _signOut() async {
+    final shouldSignOut = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        final themeProvider = Provider.of<ThemeProvider>(context);
+        final colors = themeProvider.colors;
+
+        return AlertDialog(
+          backgroundColor: colors.surface,
+          title: Text('Sign Out', style: TextStyle(color: colors.text)),
+          content: Text(
+            'Are you sure you want to sign out?',
+            style: TextStyle(color: colors.subtext),
+          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text('Cancel', style: TextStyle(color: colors.subtext)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Sign Out'),
+            ),
+          ],
+        );
       },
-      activeThumbColor: isDarkMode ? Colors.grey.shade400 : colors.primary,
-      activeTrackColor: isDarkMode ? Colors.grey.shade700 : null,
-      inactiveThumbColor: isDarkMode ? Colors.grey.shade400 : null,
-      inactiveTrackColor: isDarkMode ? Colors.grey.shade800 : null,
-    ),
-  );
-}
+    );
+
+    if (shouldSignOut != true) return;
+
+    // Start sign out process
+    setState(() {
+      _isSigningOut = true;
+    });
+
+    try {
+      // Sign out using AuthService
+      await AuthService.signOut();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Signed out successfully'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+         Navigator.of(context).pop(true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to sign out: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSigningOut = false;
+        });
+      }
+    }
+  }
+  // ========================================================
 
   void _showFeedbackDialog(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -485,43 +597,6 @@ Widget _buildSwitchMenuItem({
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text('Close', style: TextStyle(color: colors.primary)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showSignOutDialog(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final colors = themeProvider.colors;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: colors.surface,
-        title: Text('Sign Out', style: TextStyle(color: colors.text)),
-        content: Text(
-          'Are you sure you want to sign out?',
-          style: TextStyle(color: colors.subtext),
-        ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: colors.subtext)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Signed out successfully'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Sign Out'),
           ),
         ],
       ),
