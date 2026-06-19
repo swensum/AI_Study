@@ -1,6 +1,7 @@
 // lib/screens/chat_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/chat_message.dart';
 import '../providers/chat_provider.dart';
 import '../widgets/sidebar_drawer.dart';
@@ -18,6 +19,9 @@ class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  // Get current user
+  User? get _currentUser => FirebaseAuth.instance.currentUser;
+
   @override
   void dispose() {
     _controller.dispose();
@@ -29,6 +33,9 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final colors = themeProvider.colors;
+    final chatProvider = context.watch<ChatProvider>();
+    final hasMessages = chatProvider.messages.isNotEmpty;
+    final isLoggedIn = _currentUser != null;
     
     return Scaffold(
       backgroundColor: colors.background,
@@ -38,6 +45,7 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           _buildChatArea(),
 
+          // Top left menu button
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
             left: 16,
@@ -49,98 +57,100 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
 
-          // Floating menu button (top right)
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
-            right: 16,
-            child: _buildFloatingButton(
-              icon: Icons.more_vert,
-              onTap: () async {
-                final result = await showMenu(
-                  context: context,
-                  position: RelativeRect.fromLTRB(
-                    MediaQuery.of(context).size.width,
-                    MediaQuery.of(context).padding.top + 60,
-                    16,
-                    0,
-                  ),
-                  color: colors.surface,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 8,
-                  items: [
-                    PopupMenuItem(
-                      value: 'new_chat',
-                      child: Row(
-                        children: [
-                          Icon(Icons.add, color: colors.text),
-                          const SizedBox(width: 12),
-                          Text(
-                            'New Chat',
-                            style: TextStyle(color: colors.text),
-                          ),
-                        ],
-                      ),
+          // Top right menu button - ONLY show when there are messages AND user is logged in
+          if (hasMessages && isLoggedIn)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 8,
+              right: 16,
+              child: _buildFloatingButton(
+                icon: Icons.more_vert,
+                onTap: () async {
+                  final result = await showMenu(
+                    context: context,
+                    position: RelativeRect.fromLTRB(
+                      MediaQuery.of(context).size.width,
+                      MediaQuery.of(context).padding.top + 60,
+                      16,
+                      0,
                     ),
-                    PopupMenuItem(
-                      value: 'clear_chat',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete_outline, color: colors.text),
-                          SizedBox(width: 12),
-                          Text(
-                            'Clear Chat',
-                            style: TextStyle(color: colors.text),
-                          ),
-                        ],
-                      ),
+                    color: colors.surface,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    PopupMenuItem(
-                      value: 'settings',
-                      child: Row(
-                        children: [
-                          Icon(Icons.settings_outlined, color: colors.text),
-                          SizedBox(width: 12),
-                          Text(
-                            'Settings',
-                            style: TextStyle(color: colors.text),
-                          ),
-                        ],
+                    elevation: 8,
+                    items: [
+                      PopupMenuItem(
+                        value: 'new_chat',
+                        child: Row(
+                          children: [
+                            Icon(Icons.add, color: colors.text),
+                            const SizedBox(width: 12),
+                            Text(
+                              'New Chat',
+                              style: TextStyle(color: colors.text),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                );
-
-                switch (result) {
-                  case 'new_chat':
-                    context.read<ChatProvider>().startNewChat();
-                    break;
-
-                  case 'clear_chat':
-                    context.read<ChatProvider>().clearChat();
-                    break;
-
-                  case 'settings':
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Settings coming soon!'),
-                        duration: Duration(seconds: 2),
+                      PopupMenuItem(
+                        value: 'clear_chat',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_outline, color: colors.text),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Clear Chat',
+                              style: TextStyle(color: colors.text),
+                            ),
+                          ],
+                        ),
                       ),
-                    );
-                    break;
-                }
-              },
+                      PopupMenuItem(
+                        value: 'settings',
+                        child: Row(
+                          children: [
+                            Icon(Icons.settings_outlined, color: colors.text),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Settings',
+                              style: TextStyle(color: colors.text),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+
+                  switch (result) {
+                    case 'new_chat':
+                      chatProvider.startNewChat();
+                      break;
+
+                    case 'clear_chat':
+                      chatProvider.clearChat();
+                      break;
+
+                    case 'settings':
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Settings coming soon!'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                      break;
+                  }
+                },
+              ),
             ),
-          ),
 
-          // Floating input area (bottom)
-          Positioned(
-            bottom: MediaQuery.of(context).padding.bottom + 8,
-            left: 16,
-            right: 16,
-            child: _buildFloatingInput(),
-          ),
+          // Floating input area (bottom) - Only show if logged in
+          if (isLoggedIn)
+            Positioned(
+              bottom: MediaQuery.of(context).padding.bottom + 8,
+              left: 16,
+              right: 16,
+              child: _buildFloatingInput(),
+            ),
         ],
       ),
     );
@@ -180,13 +190,21 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildChatArea() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
+    final isLoggedIn = _currentUser != null;
     
     return Consumer<ChatProvider>(
       builder: (context, chatProvider, child) {
+        // If not logged in, show login prompt
+        if (!isLoggedIn) {
+          return _buildLoginPrompt();
+        }
+
+        // If logged in but no messages, show empty state
         if (chatProvider.messages.isEmpty) {
           return _buildEmptyState();
         }
 
+        // Show messages
         return ShaderMask(
           shaderCallback: (Rect rect) {
             return LinearGradient(
@@ -211,7 +229,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 chatProvider.messages.length + (chatProvider.isLoading ? 1 : 0),
             itemBuilder: (context, index) {
               if (index == chatProvider.messages.length) {
-                return _LoadingBubble();
+                return const _LoadingBubble();
               }
               return _MessageBubble(message: chatProvider.messages[index]);
             },
@@ -221,10 +239,121 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // Empty state
+  // Login prompt when user is not authenticated
+  Widget _buildLoginPrompt() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
+    
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 60,
+        bottom: 120,
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.deepPurple.shade300,
+                  Colors.deepPurple.shade500,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: colors.primary.withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.lock_outline,
+              size: 48,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 32),
+
+          Text(
+            'Welcome to AI Study Assistant',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+              color: colors.text,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Text(
+              'Please sign in to start chatting with your AI tutor',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: colors.subtext,
+                height: 1.5,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 32),
+
+          // Login Button
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: ElevatedButton(
+              onPressed: () {
+                // Navigate to login screen
+                Navigator.pushNamed(context, '/login');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 40,
+                  vertical: 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 4,
+                shadowColor: colors.primary.withOpacity(0.3),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.login, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Sign In',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Empty state for logged-in users with no messages
   Widget _buildEmptyState() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final colors = themeProvider.colors;
+    final chatProvider = context.watch<ChatProvider>();
     
     return Container(
       width: double.infinity,
@@ -289,83 +418,87 @@ class _ChatScreenState extends State<ChatScreen> {
 
           const SizedBox(height: 32),
 
-          Consumer<ChatProvider>(
-            builder: (context, chatProvider, child) {
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildModeChip(
-                    icon: Icons.chat_bubble_outline,
-                    label: 'Chat',
-                    isActive: chatProvider.mode == 'chat',
-                  ),
-                  const SizedBox(width: 12),
-                  _buildModeChip(
-                    icon: Icons.summarize_outlined,
-                    label: 'Summarize',
-                    isActive: chatProvider.mode == 'summarize',
-                  ),
-                ],
-              );
-            },
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildModeChip(
+                icon: Icons.chat_bubble_outline,
+                label: 'Chat',
+                isActive: chatProvider.mode == 'chat',
+                onTap: () => chatProvider.setMode('chat'),
+              ),
+              const SizedBox(width: 12),
+              _buildModeChip(
+                icon: Icons.summarize_outlined,
+                label: 'Summarize',
+                isActive: chatProvider.mode == 'summarize',
+                onTap: () => chatProvider.setMode('summarize'),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
-Widget _buildModeChip({
-  required IconData icon,
-  required String label,
-  required bool isActive,
-}) {
-  final themeProvider = Provider.of<ThemeProvider>(context);
-  final colors = themeProvider.colors;
-  final isDarkMode = themeProvider.isDarkMode;
-  
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    decoration: BoxDecoration(
-      color: isActive
-          ? (isDarkMode ? Colors.grey.shade700 : colors.primary.withOpacity(0.2))
-          : (isDarkMode ? colors.card : Colors.grey.shade100),
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(
-        color: isActive
-            ? (isDarkMode ? Colors.grey.shade500 : colors.primary)
-            : (isDarkMode ? colors.border : Colors.grey.shade300),
-        width: isActive ? 1.5 : 1,
-      ),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          size: 16,
+
+  Widget _buildModeChip({
+    required IconData icon,
+    required String label,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
+    final isDarkMode = themeProvider.isDarkMode;
+    
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
           color: isActive
-              ? (isDarkMode ? Colors.white : colors.primary)
-              : colors.subtext,
-        ),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
+              ? (isDarkMode ? Colors.grey.shade700 : colors.primary.withOpacity(0.2))
+              : (isDarkMode ? colors.card : Colors.grey.shade100),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
             color: isActive
-                ? (isDarkMode ? Colors.white : colors.primary)
-                : colors.subtext,
+                ? (isDarkMode ? Colors.grey.shade500 : colors.primary)
+                : (isDarkMode ? colors.border : Colors.grey.shade300),
+            width: isActive ? 1.5 : 1,
           ),
         ),
-      ],
-    ),
-  );
-}
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isActive
+                  ? (isDarkMode ? Colors.white : colors.primary)
+                  : colors.subtext,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: isActive
+                    ? (isDarkMode ? Colors.white : colors.primary)
+                    : colors.subtext,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildFloatingInput() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final colors = themeProvider.colors;
     final isDarkMode = themeProvider.isDarkMode;
+    final chatProvider = context.watch<ChatProvider>();
     
     return Row(
       children: [
@@ -389,7 +522,7 @@ Widget _buildModeChip({
                 ),
                 cursorColor: isDarkMode ? Colors.white : colors.primary,
                 decoration: InputDecoration(
-                  hintText: context.watch<ChatProvider>().mode == 'summarize'
+                  hintText: chatProvider.mode == 'summarize'
                       ? 'Paste text to summarize...'
                       : 'Ask anything...',
                   hintStyle: TextStyle(color: colors.hint),
@@ -408,32 +541,31 @@ Widget _buildModeChip({
 
         const SizedBox(width: 8),
 
-     
-Material(
-  color: isDarkMode ? colors.surface : colors.primary,
-  elevation: 4,
-  borderRadius: BorderRadius.circular(14),
-  shadowColor: isDarkMode ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.1),
-  child: InkWell(
-    borderRadius: BorderRadius.circular(14),
-    onTap: _sendMessage,
-    child: Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDarkMode ? colors.border : colors.primary.withOpacity(0.5),
-          width: 1.5,
+        Material(
+          color: isDarkMode ? colors.surface : colors.primary,
+          elevation: 4,
+          borderRadius: BorderRadius.circular(14),
+          shadowColor: isDarkMode ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.1),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: _sendMessage,
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isDarkMode ? colors.border : colors.primary.withOpacity(0.5),
+                  width: 1.5,
+                ),
+              ),
+              child: Icon(
+                Icons.send_rounded,
+                color: isDarkMode ? colors.text : Colors.white,
+                size: 22,
+              ),
+            ),
+          ),
         ),
-      ),
-      child: Icon(
-        Icons.send_rounded,
-        color: isDarkMode ? colors.text : Colors.white,
-        size: 22,
-      ),
-    ),
-  ),
-),
       ],
     );
   }
@@ -470,7 +602,7 @@ class _MessageBubble extends StatelessWidget {
     final isDarkMode = themeProvider.isDarkMode;
 
     if (!isUser) {
-         // AI MESSAGE
+      // AI MESSAGE
       return Padding(
         padding: const EdgeInsets.only(bottom: 28),
         child: Column(
@@ -653,6 +785,8 @@ class _MessageBubble extends StatelessWidget {
 
 // Loading bubble widget
 class _LoadingBubble extends StatelessWidget {
+  const _LoadingBubble();
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
