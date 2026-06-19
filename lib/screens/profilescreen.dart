@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:study_assistant/screens/about.dart';
 import 'package:study_assistant/screens/editprofile.dart';
 import 'package:study_assistant/services/auth_services.dart';
 import 'package:study_assistant/widgets/theme.dart';
@@ -98,14 +99,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               subtitle: 'Rate on App Store',
               onTap: () {},
             ),
-            _buildMenuItem(
-              icon: Icons.info_outline,
-              title: 'About',
-              subtitle: 'Version 1.0.0',
-              onTap: () {
-                _showAboutDialog(context);
-              },
-            ),
+           _buildMenuItem(
+  icon: Icons.info_outline,
+  title: 'About',
+  subtitle: 'Version 1.0.0',
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AboutPage()),
+    );
+  },
+),
 
             const SizedBox(height: 24),
             // Sign Out Button
@@ -574,46 +578,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showAboutDialog(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final colors = themeProvider.colors;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: colors.surface,
-        title: Text('About', style: TextStyle(color: colors.text)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.auto_awesome, size: 48, color: colors.primary),
-            const SizedBox(height: 12),
-            Text(
-              'AI Study Assistant',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: colors.text,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text('Version 1.0.0', style: TextStyle(color: colors.subtext)),
-            const SizedBox(height: 16),
-            Text(
-              'Your personal AI tutor powered by advanced language models. Get instant answers, summarize text, and enhance your learning experience.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: colors.text, height: 1.5),
-            ),
-          ],
-        ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Close', style: TextStyle(color: colors.primary)),
-          ),
-        ],
-      ),
-    );
-  }
 }
