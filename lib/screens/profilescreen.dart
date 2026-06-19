@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:study_assistant/screens/editprofile.dart';
 import 'package:study_assistant/services/auth_services.dart';
 import 'package:study_assistant/widgets/theme.dart';
 
@@ -241,45 +242,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 12),
 
           // Edit Profile Button
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: isDarkMode ? colors.card : colors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isDarkMode
-                    ? colors.border
-                    : colors.primary.withOpacity(0.3),
-              ),
-            ),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(20),
-              onTap: () {},
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.edit, 
-                    size: 16, 
-                    color: isDarkMode ? Colors.white : colors.primary,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Edit Profile',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: isDarkMode ? Colors.white : colors.primary,
-                    ),
-                  ),
-                ],
-              ),
+         Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: isDarkMode ? colors.card : colors.primary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDarkMode
+                  ? colors.border
+                  : colors.primary.withOpacity(0.3),
             ),
           ),
-        ],
-      ),
-    );
-  }
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: () {
+              // Show Edit Profile Bottom Sheet
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => const EditProfileBottomSheet(),
+              ).then((result) {
+                // Refresh the profile screen if changes were saved
+                if (result != null && mounted) {
+                  setState(() {});
+                }
+              });
+            },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.edit, 
+                  size: 16, 
+                  color: isDarkMode ? Colors.white : colors.primary,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Edit Profile',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isDarkMode ? Colors.white : colors.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildSectionTitle(String title) {
     final themeProvider = Provider.of<ThemeProvider>(context);
