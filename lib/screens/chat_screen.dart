@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:study_assistant/screens/loginscreen.dart';
 import '../models/chat_message.dart';
 import '../providers/chat_provider.dart';
 import '../widgets/sidebar_drawer.dart';
@@ -205,8 +206,11 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(50),
-        onTap: () {
-          Navigator.pushNamed(context, '/login');
+        onTap: () async {
+           await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+              );
         },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
