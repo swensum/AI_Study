@@ -57,100 +57,102 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
 
-          // Top right menu button - ONLY show when there are messages AND user is logged in
-          if (hasMessages && isLoggedIn)
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 8,
-              right: 16,
-              child: _buildFloatingButton(
-                icon: Icons.more_vert,
-                onTap: () async {
-                  final result = await showMenu(
-                    context: context,
-                    position: RelativeRect.fromLTRB(
-                      MediaQuery.of(context).size.width,
-                      MediaQuery.of(context).padding.top + 60,
-                      16,
-                      0,
-                    ),
-                    color: colors.surface,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 8,
-                    items: [
-                      PopupMenuItem(
-                        value: 'new_chat',
-                        child: Row(
-                          children: [
-                            Icon(Icons.add, color: colors.text),
-                            const SizedBox(width: 12),
-                            Text(
-                              'New Chat',
-                              style: TextStyle(color: colors.text),
+          // Top right - Show three-dot menu if logged in AND has messages, else show login button if not logged in
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            right: 16,
+            child: isLoggedIn
+                ? (hasMessages
+                    ? _buildFloatingButton(
+                        icon: Icons.more_vert,
+                        onTap: () async {
+                          final result = await showMenu(
+                            context: context,
+                            position: RelativeRect.fromLTRB(
+                              MediaQuery.of(context).size.width,
+                              MediaQuery.of(context).padding.top + 60,
+                              16,
+                              0,
                             ),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: 'clear_chat',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete_outline, color: colors.text),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Clear Chat',
-                              style: TextStyle(color: colors.text),
+                            color: colors.surface,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: 'settings',
-                        child: Row(
-                          children: [
-                            Icon(Icons.settings_outlined, color: colors.text),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Settings',
-                              style: TextStyle(color: colors.text),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  );
+                            elevation: 8,
+                            items: [
+                              PopupMenuItem(
+                                value: 'new_chat',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.add, color: colors.text),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'New Chat',
+                                      style: TextStyle(color: colors.text),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'clear_chat',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.delete_outline, color: colors.text),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'Clear Chat',
+                                      style: TextStyle(color: colors.text),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'settings',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.settings_outlined, color: colors.text),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'Settings',
+                                      style: TextStyle(color: colors.text),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
 
-                  switch (result) {
-                    case 'new_chat':
-                      chatProvider.startNewChat();
-                      break;
+                          switch (result) {
+                            case 'new_chat':
+                              chatProvider.startNewChat();
+                              break;
 
-                    case 'clear_chat':
-                      chatProvider.clearChat();
-                      break;
+                            case 'clear_chat':
+                              chatProvider.clearChat();
+                              break;
 
-                    case 'settings':
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Settings coming soon!'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                      break;
-                  }
-                },
-              ),
-            ),
+                            case 'settings':
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Settings coming soon!'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                              break;
+                          }
+                        },
+                      )
+                    : const SizedBox.shrink()) // Hide completely if logged in but no messages
+                : _buildLoginButton(), // Show login button if not logged in
+          ),
 
-          // Floating input area (bottom) - Only show if logged in
-          if (isLoggedIn)
-            Positioned(
-              bottom: MediaQuery.of(context).padding.bottom + 8,
-              left: 16,
-              right: 16,
-              child: _buildFloatingInput(),
-            ),
+          // Floating input area (bottom) - Always visible for everyone
+          Positioned(
+            bottom: MediaQuery.of(context).padding.bottom + 8,
+            left: 16,
+            right: 16,
+            child: _buildFloatingInput(),
+          ),
         ],
       ),
     );
@@ -187,24 +189,61 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  Widget _buildLoginButton() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
+    final isDarkMode = themeProvider.isDarkMode;
+
+    return Material(
+      color: isDarkMode ? colors.surface : colors.primary,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(50),
+        side: BorderSide(
+          color: isDarkMode ? colors.border : colors.primary.withOpacity(0.5), 
+          width: 2
+        ),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(50),
+        onTap: () {
+          Navigator.pushNamed(context, '/login');
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.login,
+                color: isDarkMode ? colors.text : Colors.white,
+                size: 18,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Sign In',
+                style: TextStyle(
+                  color: isDarkMode ? colors.text : Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildChatArea() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    final isLoggedIn = _currentUser != null;
     
     return Consumer<ChatProvider>(
       builder: (context, chatProvider, child) {
-        // If not logged in, show login prompt
-        if (!isLoggedIn) {
-          return _buildLoginPrompt();
-        }
-
-        // If logged in but no messages, show empty state
         if (chatProvider.messages.isEmpty) {
           return _buildEmptyState();
         }
 
-        // Show messages
         return ShaderMask(
           shaderCallback: (Rect rect) {
             return LinearGradient(
@@ -239,117 +278,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // Login prompt when user is not authenticated
-  Widget _buildLoginPrompt() {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final colors = themeProvider.colors;
-    
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 60,
-        bottom: 120,
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.deepPurple.shade300,
-                  Colors.deepPurple.shade500,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: colors.primary.withOpacity(0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.lock_outline,
-              size: 48,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 32),
-
-          Text(
-            'Welcome to AI Study Assistant',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: colors.text,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Text(
-              'Please sign in to start chatting with your AI tutor',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15,
-                color: colors.subtext,
-                height: 1.5,
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 32),
-
-          // Login Button
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: ElevatedButton(
-              onPressed: () {
-                // Navigate to login screen
-                Navigator.pushNamed(context, '/login');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 40,
-                  vertical: 16,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 4,
-                shadowColor: colors.primary.withOpacity(0.3),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.login, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Sign In',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Empty state for logged-in users with no messages
+  // Empty state
   Widget _buildEmptyState() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final colors = themeProvider.colors;
