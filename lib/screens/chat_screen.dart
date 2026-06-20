@@ -189,55 +189,53 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
   }
+Widget _buildLoginButton() {
+  final themeProvider = Provider.of<ThemeProvider>(context);
+  final colors = themeProvider.colors;
+  final isDarkMode = themeProvider.isDarkMode;
 
-  Widget _buildLoginButton() {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final colors = themeProvider.colors;
-    final isDarkMode = themeProvider.isDarkMode;
-
-    return Material(
-      color: isDarkMode ? colors.surface : colors.primary,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(50),
-        side: BorderSide(
-          color: isDarkMode ? colors.border : colors.primary.withOpacity(0.5), 
-          width: 2
+  return Material(
+    color: isDarkMode ? Colors.white : colors.primary,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(50),
+      side: BorderSide(
+        color: isDarkMode ? Colors.grey.shade300 : colors.primary.withOpacity(0.5), 
+        width: 2
+      ),
+    ),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(50),
+      onTap: () async {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.login,
+              color: isDarkMode ? Colors.black : Colors.white,
+              size: 18,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'Log In',
+              style: TextStyle(
+                color: isDarkMode ? Colors.black : Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(50),
-        onTap: () async {
-           await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-              );
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.login,
-                color: isDarkMode ? colors.text : Colors.white,
-                size: 18,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'Sign In',
-                style: TextStyle(
-                  color: isDarkMode ? colors.text : Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
+    ),
+  );
+}
   Widget _buildChatArea() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
