@@ -6,7 +6,7 @@ import 'package:study_assistant/screens/loginscreen.dart';
 import '../models/chat_message.dart';
 import '../providers/chat_provider.dart';
 import '../widgets/sidebar_drawer.dart';
-import '../widgets/theme.dart'; // Your ThemeProvider
+import '../widgets/theme.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -20,7 +20,6 @@ class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  // Get current user
   User? get _currentUser => FirebaseAuth.instance.currentUser;
 
   @override
@@ -42,119 +41,152 @@ class _ChatScreenState extends State<ChatScreen> {
       backgroundColor: colors.background,
       key: _scaffoldKey,
       drawer: const SidebarDrawer(),
-      body: Stack(
-        children: [
-          _buildChatArea(),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          // Get safe area padding
+          final safePadding = MediaQuery.of(context).padding;
+          final screenWidth = constraints.maxWidth;
+          
+          // Calculate responsive sizes
+          final topPadding = safePadding.top + 8;
+          final bottomPadding = safePadding.bottom + 8;
+          final horizontalPadding = screenWidth * 0.04; // 4% of screen width
+          final buttonSize = screenWidth < 380 ? 40.0 : 44.0;
+          final iconSize = screenWidth < 380 ? 18.0 : 22.0;
+          final fontSize = screenWidth < 380 ? 12.0 : 14.0;
+          
+          return Stack(
+            children: [
+              _buildChatArea(constraints, safePadding),
 
-          // Top left menu button
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
-            left: 16,
-            child: _buildFloatingButton(
-              icon: Icons.menu,
-              onTap: () {
-                _scaffoldKey.currentState?.openDrawer();
-              },
-            ),
-          ),
+              // Top left menu button
+              Positioned(
+                top: topPadding,
+                left: horizontalPadding,
+                child: _buildFloatingButton(
+                  icon: Icons.menu,
+                  iconSize: iconSize,
+                  buttonSize: buttonSize,
+                  onTap: () {
+                    _scaffoldKey.currentState?.openDrawer();
+                  },
+                ),
+              ),
 
-          // Top right - Show three-dot menu if logged in AND has messages, else show login button if not logged in
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
-            right: 16,
-            child: isLoggedIn
-                ? (hasMessages
-                    ? _buildFloatingButton(
-                        icon: Icons.more_vert,
-                        onTap: () async {
-                          final result = await showMenu(
-                            context: context,
-                            position: RelativeRect.fromLTRB(
-                              MediaQuery.of(context).size.width,
-                              MediaQuery.of(context).padding.top + 60,
-                              16,
-                              0,
-                            ),
-                            color: colors.surface,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 8,
-                            items: [
-                              PopupMenuItem(
-                                value: 'new_chat',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.add, color: colors.text),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      'New Chat',
-                                      style: TextStyle(color: colors.text),
+              // Top right button
+              Positioned(
+                top: topPadding,
+                right: horizontalPadding,
+                child: isLoggedIn
+                    ? (hasMessages
+                        ? _buildFloatingButton(
+                            icon: Icons.more_vert,
+                            iconSize: iconSize,
+                            buttonSize: buttonSize,
+                            onTap: () async {
+                              final result = await showMenu(
+                                context: context,
+                                position: RelativeRect.fromLTRB(
+                                  screenWidth,
+                                  topPadding + 50,
+                                  horizontalPadding,
+                                  0,
+                                ),
+                                color: colors.surface,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 8,
+                                items: [
+                                  PopupMenuItem(
+                                    value: 'new_chat',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.add, color: colors.text, size: 20),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          'New Chat',
+                                          style: TextStyle(
+                                            color: colors.text,
+                                            fontSize: fontSize,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              ),
-                              PopupMenuItem(
-                                value: 'clear_chat',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.delete_outline, color: colors.text),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      'Clear Chat',
-                                      style: TextStyle(color: colors.text),
+                                  ),
+                                  PopupMenuItem(
+                                    value: 'clear_chat',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.delete_outline, color: colors.text, size: 20),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          'Clear Chat',
+                                          style: TextStyle(
+                                            color: colors.text,
+                                            fontSize: fontSize,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              ),
-                              PopupMenuItem(
-                                value: 'settings',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.settings_outlined, color: colors.text),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      'Settings',
-                                      style: TextStyle(color: colors.text),
+                                  ),
+                                  PopupMenuItem(
+                                    value: 'settings',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.settings_outlined, color: colors.text, size: 20),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          'Settings',
+                                          style: TextStyle(
+                                            color: colors.text,
+                                            fontSize: fontSize,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          );
-
-                          switch (result) {
-                            case 'new_chat':
-                              chatProvider.startNewChat();
-                              break;
-
-                            case 'clear_chat':
-                              chatProvider.clearChat();
-                              break;
-
-                            case 'settings':
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Settings coming soon!'),
-                                  duration: Duration(seconds: 2),
-                                ),
+                                  ),
+                                ],
                               );
-                              break;
-                          }
-                        },
-                      )
-                    : const SizedBox.shrink()) // Hide completely if logged in but no messages
-                : _buildLoginButton(), // Show login button if not logged in
-          ),
 
-          // Floating input area (bottom) - Always visible for everyone
-          Positioned(
-            bottom: MediaQuery.of(context).padding.bottom + 8,
-            left: 16,
-            right: 16,
-            child: _buildFloatingInput(),
-          ),
-        ],
+                              switch (result) {
+                                case 'new_chat':
+                                  chatProvider.startNewChat();
+                                  break;
+                                case 'clear_chat':
+                                  chatProvider.clearChat();
+                                  break;
+                                case 'settings':
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Settings coming soon!'),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                  break;
+                              }
+                            },
+                          )
+                        : const SizedBox.shrink())
+                    : _buildLoginButton(
+                        fontSize: fontSize,
+                        buttonSize: buttonSize,
+                      ),
+              ),
+
+              // Floating input area - Always visible
+              Positioned(
+                bottom: bottomPadding,
+                left: horizontalPadding,
+                right: horizontalPadding,
+                child: _buildFloatingInput(
+                  screenWidth: screenWidth,
+                  fontSize: fontSize,
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -162,6 +194,8 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildFloatingButton({
     required IconData icon,
     required VoidCallback onTap,
+    required double iconSize,
+    required double buttonSize,
   }) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final colors = themeProvider.colors;
@@ -173,78 +207,90 @@ class _ChatScreenState extends State<ChatScreen> {
         borderRadius: BorderRadius.circular(50),
         side: BorderSide(
           color: isDarkMode ? colors.border : colors.primary.withOpacity(0.5), 
-          width: 2
+          width: 2,
         ),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(50),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.all(10),
+          padding: EdgeInsets.all(buttonSize * 0.25),
           child: Icon(
             icon, 
             color: isDarkMode ? colors.text : colors.surface,
+            size: iconSize,
           ),
         ),
       ),
     );
   }
-Widget _buildLoginButton() {
-  final themeProvider = Provider.of<ThemeProvider>(context);
-  final colors = themeProvider.colors;
-  final isDarkMode = themeProvider.isDarkMode;
 
-  return Material(
-    color: isDarkMode ? Colors.white : colors.primary,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(50),
-      side: BorderSide(
-        color: isDarkMode ? Colors.grey.shade300 : colors.primary.withOpacity(0.5), 
-        width: 2
-      ),
-    ),
-    child: InkWell(
-      borderRadius: BorderRadius.circular(50),
-      onTap: () async {
-        await Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.login,
-              color: isDarkMode ? Colors.black : Colors.white,
-              size: 18,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              'Log In',
-              style: TextStyle(
-                color: isDarkMode ? Colors.black : Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
+  Widget _buildLoginButton({
+    required double fontSize,
+    required double buttonSize,
+  }) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = themeProvider.colors;
+    final isDarkMode = themeProvider.isDarkMode;
+
+    return Material(
+      color: isDarkMode ? Colors.white : colors.primary,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(50),
+        side: BorderSide(
+          color: isDarkMode ? Colors.grey.shade300 : colors.primary.withOpacity(0.5), 
+          width: 2,
         ),
       ),
-    ),
-  );
-}
-  Widget _buildChatArea() {
+      child: InkWell(
+        borderRadius: BorderRadius.circular(50),
+        onTap: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+          );
+        },
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: buttonSize * 0.4,
+            vertical: buttonSize * 0.25,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.login,
+                color: isDarkMode ? Colors.black : Colors.white,
+                size: fontSize + 4,
+              ),
+              SizedBox(width: fontSize * 0.4),
+              Text(
+                'Log In',
+                style: TextStyle(
+                  color: isDarkMode ? Colors.black : Colors.white,
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChatArea(BoxConstraints constraints, EdgeInsets padding) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
     
     return Consumer<ChatProvider>(
       builder: (context, chatProvider, child) {
         if (chatProvider.messages.isEmpty) {
-          return _buildEmptyState();
+          return _buildEmptyState(constraints, padding);
         }
+
+        final topOffset = padding.top + 70.0;
+        final bottomOffset = 100.0;
 
         return ShaderMask(
           shaderCallback: (Rect rect) {
@@ -261,10 +307,10 @@ Widget _buildLoginButton() {
           child: ListView.builder(
             controller: _scrollController,
             padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + 70,
-              bottom: 100,
-              left: 20,
-              right: 20,
+              top: topOffset,
+              bottom: bottomOffset,
+              left: constraints.maxWidth * 0.04,
+              right: constraints.maxWidth * 0.04,
             ),
             itemCount:
                 chatProvider.messages.length + (chatProvider.isLoading ? 1 : 0),
@@ -272,7 +318,10 @@ Widget _buildLoginButton() {
               if (index == chatProvider.messages.length) {
                 return const _LoadingBubble();
               }
-              return _MessageBubble(message: chatProvider.messages[index]);
+              return _MessageBubble(
+                message: chatProvider.messages[index],
+                maxWidth: constraints.maxWidth * 0.85,
+              );
             },
           ),
         );
@@ -280,23 +329,28 @@ Widget _buildLoginButton() {
     );
   }
 
-  // Empty state
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BoxConstraints constraints, EdgeInsets padding) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final colors = themeProvider.colors;
     final chatProvider = context.watch<ChatProvider>();
     
+    final topPadding = padding.top + 60;
+    final bottomPadding = 120.0;
+    final iconSize = constraints.maxWidth < 380 ? 36.0 : 48.0;
+    final titleSize = constraints.maxWidth < 380 ? 20.0 : 24.0;
+    final subtitleSize = constraints.maxWidth < 380 ? 13.0 : 15.0;
+    
     return Container(
       width: double.infinity,
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 60,
-        bottom: 120,
+        top: topPadding,
+        bottom: bottomPadding,
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(constraints.maxWidth < 380 ? 18 : 24),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -315,39 +369,41 @@ Widget _buildLoginButton() {
                 ),
               ],
             ),
-            child: const Icon(
+            child: Icon(
               Icons.auto_awesome,
-              size: 48,
+              size: iconSize,
               color: Colors.white,
             ),
           ),
-          const SizedBox(height: 32),
+          SizedBox(height: constraints.maxWidth < 380 ? 24 : 32),
 
           Text(
             'How can I help you study?',
             style: TextStyle(
-              fontSize: 24,
+              fontSize: titleSize,
               fontWeight: FontWeight.w600,
               color: colors.text,
               letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: constraints.maxWidth < 380 ? 8 : 12),
 
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
+            padding: EdgeInsets.symmetric(
+              horizontal: constraints.maxWidth * 0.08,
+            ),
             child: Text(
               'Ask questions about any topic or paste notes to summarize',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 15,
+                fontSize: subtitleSize,
                 color: colors.subtext,
                 height: 1.5,
               ),
             ),
           ),
 
-          const SizedBox(height: 32),
+          SizedBox(height: constraints.maxWidth < 380 ? 24 : 32),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -356,13 +412,15 @@ Widget _buildLoginButton() {
                 icon: Icons.chat_bubble_outline,
                 label: 'Chat',
                 isActive: chatProvider.mode == 'chat',
+                screenWidth: constraints.maxWidth,
                 onTap: () => chatProvider.setMode('chat'),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: constraints.maxWidth < 380 ? 8 : 12),
               _buildModeChip(
                 icon: Icons.summarize_outlined,
                 label: 'Summarize',
                 isActive: chatProvider.mode == 'summarize',
+                screenWidth: constraints.maxWidth,
                 onTap: () => chatProvider.setMode('summarize'),
               ),
             ],
@@ -377,15 +435,23 @@ Widget _buildLoginButton() {
     required String label,
     required bool isActive,
     required VoidCallback onTap,
+    required double screenWidth,
   }) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final colors = themeProvider.colors;
     final isDarkMode = themeProvider.isDarkMode;
     
+    final chipPadding = screenWidth < 380 ? 12.0 : 16.0;
+    final iconSize = screenWidth < 380 ? 14.0 : 16.0;
+    final fontSize = screenWidth < 380 ? 12.0 : 13.0;
+    
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: EdgeInsets.symmetric(
+          horizontal: chipPadding,
+          vertical: chipPadding * 0.5,
+        ),
         decoration: BoxDecoration(
           color: isActive
               ? (isDarkMode ? Colors.grey.shade700 : colors.primary.withOpacity(0.2))
@@ -403,16 +469,16 @@ Widget _buildLoginButton() {
           children: [
             Icon(
               icon,
-              size: 16,
+              size: iconSize,
               color: isActive
                   ? (isDarkMode ? Colors.white : colors.primary)
                   : colors.subtext,
             ),
-            const SizedBox(width: 6),
+            SizedBox(width: iconSize * 0.4),
             Text(
               label,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: fontSize,
                 fontWeight: FontWeight.w500,
                 color: isActive
                     ? (isDarkMode ? Colors.white : colors.primary)
@@ -425,11 +491,17 @@ Widget _buildLoginButton() {
     );
   }
 
-  Widget _buildFloatingInput() {
+  Widget _buildFloatingInput({
+    required double screenWidth,
+    required double fontSize,
+  }) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final colors = themeProvider.colors;
     final isDarkMode = themeProvider.isDarkMode;
     final chatProvider = context.watch<ChatProvider>();
+    
+    final inputPadding = screenWidth < 380 ? 12.0 : 14.0;
+    final iconSize = screenWidth < 380 ? 18.0 : 22.0;
     
     return Row(
       children: [
@@ -448,7 +520,7 @@ Widget _buildLoginButton() {
                 controller: _controller,
                 onSubmitted: (_) => _sendMessage(),
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: fontSize,
                   color: colors.text,
                 ),
                 cursorColor: isDarkMode ? Colors.white : colors.primary,
@@ -456,11 +528,14 @@ Widget _buildLoginButton() {
                   hintText: chatProvider.mode == 'summarize'
                       ? 'Paste text to summarize...'
                       : 'Ask anything...',
-                  hintStyle: TextStyle(color: colors.hint),
+                  hintStyle: TextStyle(
+                    color: colors.hint,
+                    fontSize: fontSize,
+                  ),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 14,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: inputPadding * 1.5,
+                    vertical: inputPadding,
                   ),
                 ),
                 maxLines: 4,
@@ -470,7 +545,7 @@ Widget _buildLoginButton() {
           ),
         ),
 
-        const SizedBox(width: 8),
+        SizedBox(width: screenWidth < 380 ? 6 : 8),
 
         Material(
           color: isDarkMode ? colors.surface : colors.primary,
@@ -481,7 +556,7 @@ Widget _buildLoginButton() {
             borderRadius: BorderRadius.circular(14),
             onTap: _sendMessage,
             child: Container(
-              padding: const EdgeInsets.all(14),
+              padding: EdgeInsets.all(inputPadding),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
@@ -492,7 +567,7 @@ Widget _buildLoginButton() {
               child: Icon(
                 Icons.send_rounded,
                 color: isDarkMode ? colors.text : Colors.white,
-                size: 22,
+                size: iconSize,
               ),
             ),
           ),
@@ -519,11 +594,15 @@ Widget _buildLoginButton() {
   }
 }
 
-// Message bubble widget
+// Message bubble widget - Updated with LayoutBuilder for responsiveness
 class _MessageBubble extends StatelessWidget {
   final ChatMessage message;
+  final double maxWidth;
 
-  const _MessageBubble({required this.message});
+  const _MessageBubble({
+    required this.message,
+    required this.maxWidth,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -533,13 +612,11 @@ class _MessageBubble extends StatelessWidget {
     final isDarkMode = themeProvider.isDarkMode;
 
     if (!isUser) {
-      // AI MESSAGE
       return Padding(
         padding: const EdgeInsets.only(bottom: 28),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // AI label with icon
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Row(
@@ -573,11 +650,7 @@ class _MessageBubble extends StatelessWidget {
                 ],
               ),
             ),
-
-            // Rich text with bold formatting only
             _buildRichText(context, message.content, colors),
-
-            // Timestamp
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: Text(
@@ -594,17 +667,15 @@ class _MessageBubble extends StatelessWidget {
       );
     }
 
-    // User messages - simple bubble, no label
     return Padding(
       padding: const EdgeInsets.only(bottom: 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // User message bubble
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.8,
+              maxWidth: maxWidth * 0.85,
             ),
             decoration: BoxDecoration(
               color: isDarkMode 
@@ -624,8 +695,6 @@ class _MessageBubble extends StatelessWidget {
               ),
             ),
           ),
-
-          // Timestamp
           Padding(
             padding: const EdgeInsets.only(top: 8, right: 4),
             child: Text(
@@ -650,7 +719,6 @@ class _MessageBubble extends StatelessWidget {
     int lastEnd = 0;
 
     for (RegExpMatch match in matches) {
-      // Add text before this match
       if (match.start > lastEnd) {
         spans.add(
           TextSpan(
@@ -665,7 +733,6 @@ class _MessageBubble extends StatelessWidget {
         );
       }
 
-      // Add bold text
       String matchText = match.group(1)!;
       spans.add(
         TextSpan(
@@ -682,7 +749,6 @@ class _MessageBubble extends StatelessWidget {
       lastEnd = match.end;
     }
 
-    // Add remaining text
     if (lastEnd < text.length) {
       spans.add(
         TextSpan(
@@ -697,7 +763,6 @@ class _MessageBubble extends StatelessWidget {
       );
     }
 
-    // If no bold formatting found, return normal text
     if (spans.isEmpty) {
       return SelectableText(
         text,
@@ -728,7 +793,6 @@ class _LoadingBubble extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // AI label
           Padding(
             padding: const EdgeInsets.only(bottom: 16),
             child: Row(
@@ -762,8 +826,6 @@ class _LoadingBubble extends StatelessWidget {
               ],
             ),
           ),
-
-          // Loading animation
           Row(
             children: [
               SizedBox(
