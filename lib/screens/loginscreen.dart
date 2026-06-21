@@ -18,7 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _linkSent = false;
   bool _isGoogleLoading = false;
-  
+
   // Create an instance of AuthService
   final AuthService _authService = AuthService();
 
@@ -31,11 +31,14 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _checkForEmailLink() async {
     try {
       final String? link = await _getEmailLink();
-      
+
       if (link != null) {
         final email = await AuthService.getStoredEmail();
         if (email != null && email.isNotEmpty) {
-          final userCredential = await AuthService.signInWithEmailLink(email, link);
+          final userCredential = await AuthService.signInWithEmailLink(
+            email,
+            link,
+          );
           if (userCredential != null) {
             _showSnackBar('Successfully signed in!', isSuccess: true);
             await _loadAndNavigate();
@@ -48,34 +51,34 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<String?> _getEmailLink() async {
-    return null; 
+    return null;
   }
 
   Future<void> _sendMagicLink() async {
     final email = _emailController.text.trim();
-    
+
     if (email.isEmpty) {
       _showSnackBar('Please enter your email address');
       return;
     }
-    
+
     if (!email.contains('@') || !email.contains('.')) {
       _showSnackBar('Please enter a valid email address');
       return;
     }
-    
+
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
       bool success = await AuthService.sendSignInLink(email);
-      
+
       setState(() {
         _isLoading = false;
         _linkSent = success;
       });
-      
+
       if (success) {
         _showSnackBar(
           '✨ Magic link sent to $email! Check your inbox.',
@@ -95,13 +98,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _signInWithGoogle() async {
     if (_isGoogleLoading) return;
-    
+
     setState(() => _isGoogleLoading = true);
-    
+
     try {
       // Use the instance method
       User? user = await _authService.signInWithGoogle(context);
-      
+
       if (user != null && mounted) {
         // Navigate to chat screen
         await _loadAndNavigate();
@@ -114,15 +117,16 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) setState(() => _isGoogleLoading = false);
     }
   }
-// In LoginScreen, after successful sign in:
-Future<void> _loadAndNavigate() async {
-  final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-  await chatProvider.loadSessionsFromFirestore();
-  
-  if (mounted) {
-    Navigator.pop(context, true); 
+
+  // In LoginScreen, after successful sign in:
+  Future<void> _loadAndNavigate() async {
+    final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+    await chatProvider.loadSessionsFromFirestore();
+
+    if (mounted) {
+      Navigator.pop(context, true);
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -148,10 +152,14 @@ Future<void> _loadAndNavigate() async {
                     ),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.auto_awesome, size: 48, color: Colors.white),
+                  child: const Icon(
+                    Icons.auto_awesome,
+                    size: 48,
+                    color: Colors.white,
+                  ),
                 ),
                 const SizedBox(height: 32),
-                
+
                 // Title
                 Text(
                   'AI Study Assistant',
@@ -171,7 +179,7 @@ Future<void> _loadAndNavigate() async {
                   ),
                 ),
                 const SizedBox(height: 48),
-                
+
                 // Email Input
                 TextField(
                   controller: _emailController,
@@ -181,7 +189,10 @@ Future<void> _loadAndNavigate() async {
                   decoration: InputDecoration(
                     labelText: 'Email Address',
                     labelStyle: TextStyle(color: colors.subtext),
-                    prefixIcon: Icon(Icons.email_outlined, color: colors.primary),
+                    prefixIcon: Icon(
+                      Icons.email_outlined,
+                      color: colors.primary,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: colors.border),
@@ -197,14 +208,16 @@ Future<void> _loadAndNavigate() async {
                   ),
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Send Magic Link Button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _linkSent ? _resendLink : _sendMagicLink,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _linkSent ? Colors.green : colors.primary,
+                      backgroundColor: _linkSent
+                          ? Colors.green
+                          : colors.primary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -229,17 +242,14 @@ Future<void> _loadAndNavigate() async {
                           ),
                   ),
                 ),
-                
+
                 // Divider with OR text
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Row(
                     children: [
                       Expanded(
-                        child: Divider(
-                          color: colors.border,
-                          thickness: 1,
-                        ),
+                        child: Divider(color: colors.border, thickness: 1),
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -252,10 +262,7 @@ Future<void> _loadAndNavigate() async {
                         ),
                       ),
                       Expanded(
-                        child: Divider(
-                          color: colors.border,
-                          thickness: 1,
-                        ),
+                        child: Divider(color: colors.border, thickness: 1),
                       ),
                     ],
                   ),
@@ -263,49 +270,84 @@ Future<void> _loadAndNavigate() async {
 
                 // Google Sign-In Button
                 SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _isGoogleLoading ? null : _signInWithGoogle,
-                    icon: _isGoogleLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Icon(
-                            Icons.g_mobiledata,
-                            size: 28,
-                          ),
-                    label: _isGoogleLoading
-                        ? Text(
-                            'Signing in...',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: colors.text,
-                            ),
-                          )
-                        : Text(
-                            'Sign in with Google',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: colors.text,
-                            ),
-                          ),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: colors.text,
-                      side: BorderSide(color: colors.border, width: 1.5),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+  width: double.infinity,
+  child: OutlinedButton(
+    onPressed: _isGoogleLoading ? null : _signInWithGoogle,
+    style: OutlinedButton.styleFrom(
+      foregroundColor: colors.text,
+      side: BorderSide(
+        color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300,
+        width: 1.5,
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      backgroundColor: isDarkMode ? Colors.grey.shade900 : Colors.white,
+    ),
+    child: _isGoogleLoading
+        ? Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.blue,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Signing in...',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: colors.text,
+                ),
+              ),
+            ],
+          )
+        : Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Google Icon in Circle Container
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300,
+                    width: 1,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    'G',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : Colors.blue.shade700,
+                      fontFamily: 'Roboto',
                     ),
                   ),
                 ),
-                
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Sign in with Google',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: colors.text,
+                ),
+              ),
+            ],
+          ),
+  ),
+),
                 // Resend timer or status message
                 if (_linkSent) ...[
                   const SizedBox(height: 16),
@@ -317,15 +359,16 @@ Future<void> _loadAndNavigate() async {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.check_circle, color: colors.primary, size: 20),
+                        Icon(
+                          Icons.check_circle,
+                          color: colors.primary,
+                          size: 20,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'Magic link sent! Check your email and click the link to sign in.',
-                            style: TextStyle(
-                              color: colors.text,
-                              fontSize: 13,
-                            ),
+                            style: TextStyle(color: colors.text, fontSize: 13),
                           ),
                         ),
                       ],
@@ -346,13 +389,13 @@ Future<void> _loadAndNavigate() async {
       setState(() {
         _isLoading = true;
       });
-      
+
       bool success = await AuthService.sendSignInLink(email);
-      
+
       setState(() {
         _isLoading = false;
       });
-      
+
       if (success) {
         _showSnackBar('Magic link resent to $email!', isSuccess: true);
       } else {
